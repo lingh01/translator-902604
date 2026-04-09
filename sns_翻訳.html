@@ -75,7 +75,7 @@
                 if (digimon_names[name]) {
                     return name + " / " + digimon_names[name];
                 } else {
-                    missingTranslations.push(`Digimon: ${name}`);
+                    missingTranslations.push(`デジモン: ${name} (英名未登録)`);
                     return name;
                 }
             }
@@ -84,7 +84,7 @@
                 if (onepiece_names[name]) {
                     return name + " / " + onepiece_names[name];
                 } else {
-                    missingTranslations.push(`One Piece: ${name}`);
+                    missingTranslations.push(`ONE PIECE: ${name} (英名未登録)`);
                     return name;
                 }
             }
@@ -192,7 +192,7 @@
                     name: "Gundam Card Reveal",
                     pattern: /【収録カード紹介】 「(.*?)」を紹介！ ブースターパック『(.*?)』は(.*?)(?:\(.\))?\s*発売.*?▽商品ページはこちら (https?:\/\/\S+)/,
                     prefix: (m) => {
-                        missingTranslations.push(`Gundam: ${m[1]} (Always check English name manually)`);
+                        missingTranslations.push(`ガンダム: ${m[1]} (英語名はインターネットで確認してください)`);
                         return `【Card Reveal / 卡牌介紹 / แนะนำการ์ด】\n\n`;
                     },
                     outputs: {
@@ -295,11 +295,11 @@
                 }
 
                 if (!matched) {
-                    errorDiv.textContent = "Error: Text format not recognized. No matching template found.";
+                    errorDiv.textContent = "エラー：テキスト形式が認識されませんでした。対応するテンプレートが見つかりません。";
                     errorDiv.style.display = 'block';
                 } else if (missingTranslations.length > 0) {
-                    // Display warnings but keep the output functioning
-                    warningDiv.innerHTML = "<strong>Reminder:</strong> Missing/Manual translation needed for:<br><ul>" + 
+                    // show jp message
+                    warningDiv.innerHTML = "<strong>【確認事項】</strong> 辞書に未登録、または手動確認が必要な項目があります：<br><ul>" + 
                         missingTranslations.map(item => `<li>${item}</li>`).join('') + "</ul>";
                     warningDiv.style.display = 'block';
                 }
