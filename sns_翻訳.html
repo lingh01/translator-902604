@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="names.js"></script>
     <title>Social Media Post Auto-Translator</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <style>
         .error-msg { color: #d93526; background: #ffebee; padding: 1rem; border-radius: 8px; display: none; margin-bottom: 1rem; }
         textarea { font-family: monospace; font-size: 0.9rem; }
     </style>
+    <script src="names.js"></script>
 </head>
 
 <body>
@@ -38,7 +38,7 @@
 
         <script>
 
-            glossary_jp_to_en = {
+            const glossary_jp_to_en = {
                 "バトスピエントリーデッキ": "Battle Spirits Entry Deck",
                 "赫焔ノ風牙": "/ Fangs of the Crimson",
                 "紫幻ノ血醒": "/ Specter of the Violet",
@@ -51,10 +51,18 @@
                 "スタートデッキ DIGIMON BEATBREAK": "STARTER DECK DIGIMON BEATBREAK"
             }
 
-            glossary_jp_to_zh = {
+            const glossary_jp_to_zh = {
                 "ブースターパック DUAL REVOLUTION": "數碼寶貝卡牌遊戲補充包 雙重巨變",
                 "スタートデッキ DIGIMON BEATBREAK": "數碼寶貝卡牌遊戲起始牌組 節奏破碎"
             }
+
+            const colorMap = {
+                "緑": { en: "Green", zh: "綠", th: "สีเขียว" },
+                "白": { en: "White", zh: "白", th: "สีขาว" },
+                "黄": { en: "Yellow", zh: "黃", th: "สีเหลือง" },
+                "赤": { en: "Red", zh: "紅", th: "สีแดง" },
+                "青": { en: "Blue", zh: "青", th: "สีน้ำเงิน" }
+            };
 
 
             function getDigimonName(name) {
@@ -63,6 +71,10 @@
             
             function getOnePieceName(name) {
                 return onepiece_names[name] ? name + " / " + onepiece_names[name] : name;
+            }
+
+            function translateColor(jpColor, lang) {
+                return (colorMap[jpColor] && colorMap[jpColor][lang]) ? colorMap[jpColor][lang] : jpColor;
             }
 
             /** 
@@ -153,9 +165,9 @@
                     pattern: /【(.*?)商品紹介】.*?スタンダード第[二2]弾『(.*?)』で登場する(.*?)のXレア「(.*?)」のイラストを公開！.*?『ブースターパック (.*?)』は(.*?)(?:\(.\))?(発売|発売中)！/,
                     prefix: (m) => `【${m[1]} Product Reveal / 商品公開 / ข้อมูลสินค้า】\n\n`,
                     outputs: {
-                        en: (m) => `Revealing the illustration for ??? X Rare "${m[4]}"!\nStandard 2nd Booster Pack [${localizeBSName(m[2], 'en')}] will be available starting ${m[6]}!\n\n━━━━━━━━━━━━━━━━━━━━`,
-                        zh: (m) => `公開將於Standard系列第二彈《${m[2]}》中登場的???X 稀有「${m[4]}」插圖！\n《補充包 ${m[5]}》將於 ${m[6]} 發售！\n\n━━━━━━━━━━━━━━━━━━━━`,
-                        th: (m) => `มาแล้ว! ภาพอิลลัสต์ของ X Rare ??? “${m[4]}”!\nStandard 2nd Booster Pack “${localizeBSName(m[5], 'th')}” มีกำหนดวางจำหน่าย ${m[6]} นี้!`
+                        en: (m) => `Revealing the illustration for ${translateColor(m[3], 'en')} X Rare "${m[4]}"!\nStandard 2nd Booster Pack [${localizeBSName(m[2], 'en')}] will be available starting ${m[6]}!\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        zh: (m) => `公開將於Standard系列第二彈《${m[2]}》中登場的${translateColor(m[3], 'zh')}屬性X稀有「${m[4]}」插圖！\n《補充包 ${m[5]}》將於 ${m[6]} 發售！\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        th: (m) => `มาแล้ว! ภาพอิลลัสต์ของ X Rare ${translateColor(m[3], 'th')} “${m[4]}”!\nStandard 2nd Booster Pack “${localizeBSName(m[5], 'th')}” มีกำหนดวางจำหน่าย ${m[6]} นี้!`
                     },
                     hashtags: "#BattleSpirits"
                 },
