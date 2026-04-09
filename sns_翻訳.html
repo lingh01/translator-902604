@@ -9,6 +9,7 @@
     <style>
         .error-msg { color: #d93526; background: #ffebee; padding: 1rem; border-radius: 8px; display: none; margin-bottom: 1rem; }
         textarea { font-family: monospace; font-size: 0.9rem; }
+        .warning-msg { color: #856404; background: #fff3cd; padding: 1rem; border-radius: 8px; display: none; margin-bottom: 1rem; border: 1px solid #ffeeba; }
     </style>
     <script src="names.js"></script>
 </head>
@@ -19,7 +20,8 @@
         
         <label for="jpInput">Paste Japanese Source Text</label>
         <textarea id="jpInput" rows="8" placeholder="Paste the Japanese post here..."></textarea>
-
+        <div id="warningMessage" class="warning-msg"></div>
+        <div id="errorMessage" class="error-msg"></div>
         <div id="errorMessage" class="error-msg"></div>
 
         <fieldset>
@@ -54,8 +56,8 @@
             }
 
             const glossary_jp_to_zh = {
-                "ブースターパック DUAL REVOLUTION": "補充包 雙重巨變",
-                "スタートデッキ DIGIMON BEATBREAK": "起始牌組 節奏破碎"
+                "ブースターパック DUAL REVOLUTION": "數碼寶貝卡牌遊戲補充包 雙重巨變",
+                "スタートデッキ DIGIMON BEATBREAK": "數碼寶貝卡牌遊戲起始牌組 節奏破碎"
             }
 
             const colorMap = {
@@ -67,13 +69,26 @@
             };
 
 
+            let missingTranslations = [];
+
             function getDigimonName(name) {
-                return digimon_names[name] ? name + " / " + digimon_names[name] : name;
+                if (digimon_names[name]) {
+                    return name + " / " + digimon_names[name];
+                } else {
+                    missingTranslations.push(`Digimon: ${name}`);
+                    return name;
+                }
             }
-            
+
             function getOnePieceName(name) {
-                return onepiece_names[name] ? name + " / " + onepiece_names[name] : name;
+                if (onepiece_names[name]) {
+                    return name + " / " + onepiece_names[name];
+                } else {
+                    missingTranslations.push(`One Piece: ${name}`);
+                    return name;
+                }
             }
+
 
             function translateColor(jpColor, lang) {
                 return (colorMap[jpColor] && colorMap[jpColor][lang]) ? colorMap[jpColor][lang] : jpColor;
@@ -176,7 +191,10 @@
                 {
                     name: "Gundam Card Reveal",
                     pattern: /【収録カード紹介】 「(.*?)」を紹介！ ブースターパック『(.*?)』は(.*?)(?:\(.\))?\s*発売.*?▽商品ページはこちら (https?:\/\/\S+)/,
-                    prefix: (m) => `【Card Reveal / 卡牌介紹 / แนะนำการ์ด】\n\n`,
+                    prefix: (m) => {
+                        missingTranslations.push(`Gundam: ${m[1]} (Always check English name manually)`);
+                        return `【Card Reveal / 卡牌介紹 / แนะนำการ์ด】\n\n`;
+                    },
                     outputs: {
                         en: (m) => `Introducing "${m[1]}"!\nBooster Pack [${m[2]}] releases on ${m[3]}!\n▽Product Info\n${m[4].replace('/jp/', '/asia-en/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
                         zh: (m) => `介紹「${m[1]}」!\n補充包『${m[2]}』將於 ${m[3]} 發售！\n▽商品資訊\n${m[4].replace('/jp/', '/zh-tw/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
@@ -253,23 +271,22 @@
             const finalOutput = document.getElementById('finalOutput');
             const translateBtn = document.getElementById('translateBtn');
             const errorDiv = document.getElementById('errorMessage');
+            const warningDiv = document.getElementById('warningMessage');
 
             translateBtn.addEventListener('click', () => {
                 const rawText = jpInput.value.trim();
-                // Normalize: Collapses all line breaks and multiple spaces into a single space
                 const normalizedText = rawText.replace(/\s+/g, ' ');
                 
                 errorDiv.style.display = 'none';
+                warningDiv.style.display = 'none';
+                missingTranslations = []; // Reset warnings
                 finalOutput.value = '';
 
                 if (!rawText) return;
 
                 let matched = false;
-
                 for (const tmpl of translationTemplates) {
-                    // We test against normalized text to ignore whitespace differences
                     const match = normalizedText.match(tmpl.pattern);
-                    
                     if (match) {
                         renderOutput(tmpl, match);
                         matched = true;
@@ -280,9 +297,13 @@
                 if (!matched) {
                     errorDiv.textContent = "Error: Text format not recognized. No matching template found.";
                     errorDiv.style.display = 'block';
+                } else if (missingTranslations.length > 0) {
+                    // Display warnings but keep the output functioning
+                    warningDiv.innerHTML = "<strong>Reminder:</strong> Missing/Manual translation needed for:<br><ul>" + 
+                        missingTranslations.map(item => `<li>${item}</li>`).join('') + "</ul>";
+                    warningDiv.style.display = 'block';
                 }
             });
-
             function renderOutput(template, matchGroups) {
                 const results = [];
                 const useEn = document.getElementById('langEn').checked;
