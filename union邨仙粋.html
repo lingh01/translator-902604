@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>CSV Union - Perfect Version</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background: #f0f2f5; }
+        .box { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        #drop-zone { border: 3px dashed #007bff; padding: 40px; text-align: center; cursor: pointer; background: #f8fbff; color: #007bff; border-radius: 10px; margin-bottom: 20px; font-weight: bold; }
+        #drop-zone.hover { background: #eef6ff; border-color: #0056b3; }
+        button { background: #007bff; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #ccc; }
+        .table-wrap { overflow: auto; max-height: 450px; border: 1px solid #ddd; border-radius: 8px; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th { background: #343a40; color: white; position: sticky; top: 0; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #eee; white-space: pre-wrap; vertical-align: top; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>CSV 統合ツール (最終調整版)</h2>
+    <div id="drop-zone">ここにCSVをドロップ</div>
+    <input type="file" id="file-input" multiple accept=".csv,.txt" style="display: none;">
+    
+    <div id="status" style="margin-bottom: 15px; color: #28a745; font-weight: bold;"></div>
+    
+    <button id="dl-btn" disabled>CSVを保存する</button>
+    <button onclick="location.reload()" style="background:#6c757d;">リセット</button>
+
+    <div class="table-wrap" id="result"></div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const dlBtn = document.getElementById('dl-btn');
+    const status = document.getElementById('status');
+
+    let globalHeader = [];
+    let globalRows = [];
+
+    dropZone.onclick = () => fileInput.click();
+    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('hover'); };
+    dropZone.ondragleave = () => dropZone.classList.remove('hover');
+    dropZone.ondrop = (e) => { e.preventDefault(); dropZone.classList.remove('hover'); processFiles(e.dataTransfer.files); };
+    fileInput.onchange = (e) => processFiles(e.target.files);
+
+    // 高度なCSVパース（引用符・カンマ・改行対応）
+    function parseCSV(text) {
+        const rows = [];
+        let row = [];
+        let cell = "";
+        let inQuotes = false;
+        
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const next = text[i+1];
+            if (inQuotes) {
+                if (char === '"' && next === '"') { cell += '"'; i++; }
+                else if (char === '"') { inQuotes = false; }
+                else { cell += char; }
+            } else {
+                if (char === '"') { inQuotes = true; }
+                else if (char === ',' || char === '\t') { row.push(cell.trim()); cell = ""; }
+                else if (char === '\n' || char === '\r') {
+                    row.push(cell.trim());
+                    // 中身がある行だけを追加（ゴミ行排除）
+                    if (row.some(c => c !== "")) rows.push(row);
+                    row = [];
+                    cell = "";
+                    if (char === '\r' && next === '\n') i++;
+                } else { cell += char; }
+            }
+        }
+        if (cell !== "" || row.length > 0) {
+            row.push(cell.trim());
+            if (row.some(c => c !== "")) rows.push(row);
+        }
+        return rows;
+    }
+
+    async function processFiles(files) {
+        if (files.length === 0) return;
+        globalRows = [];
+        globalHeader = [];
+
+        for (let file of files) {
+            const text = await file.text();
+            let data = parseCSV(text);
+            
+            if (data.length > 0) {
+                // 1枚目のファイルから、最初の「項目名っぽい行」を探す
+                if (globalHeader.length === 0) {
+                    let hIndex = data.findIndex(r => r.some(c => c.includes("日時") || c.includes("テキスト") || c.includes("名前")));
+                    if (hIndex === -1) hIndex = 0; // 見つからなければ1行目
+                    
+                    globalHeader = data[hIndex];
+                    globalRows.push(...data.slice(hIndex + 1));
+                } else {
+                    // 2枚目以降はヘッダーと一致する行を除外して追加
+                    const filtered = data.filter(r => JSON.stringify(r) !== JSON.stringify(globalHeader) && !r.join("").includes("投稿日時"));
+                    globalRows.push(...filtered);
+                }
+            }
+        }
+
+        // 一番左（投稿日時など）で昇順ソート
+        globalRows.sort((a, b) => {
+            const aVal = String(a || a || "");
+            const bVal = String(b || b || "");
+            return aVal.localeCompare(bVal, undefined, {numeric: true});
+        });
+
+        renderTable();
+        status.innerText = `結合完了：${globalRows.length}件`;
+        dlBtn.disabled = false;
+    }
+
+    function renderTable() {
+        let html = '<table><thead><tr>' + globalHeader.map(h => `<th>${h || '-'}</th>`).join('') + '</tr></thead><tbody>';
+        globalRows.slice(0, 50).forEach(r => {
+            html += '<tr>' + r.map(c => `<td>${c}</td>`).join('') + '</tr>';
+        });
+        html += '</tbody></table>';
+        document.getElementById('result').innerHTML = html;
+    }
+
+    dlBtn.onclick = () => {
+        const csv = [globalHeader, ...globalRows].map(r => 
+            r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")
+        ).join("\r\n");
+        const blob = new Blob(["\ufeff" + csv], {type: 'text/csv;charset=utf-8'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "result_final.csv";
+        a.click();
+    };
+</script>
+
+</body>
+</html>
