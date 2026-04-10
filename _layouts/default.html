@@ -1,35 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ page.title }}</title>
   
-  <!-- Pico CSS CDN -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-  
   <style>
-    /* Simple tweak to highlight the "active" page */
-    nav a.active {
-      font-weight: bold;
-      border-bottom: 2px solid var(--primary);
+    /* Basic Reset & Typography */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+      background-color: #f0f2f5;
     }
-    footer {
-      padding: 2rem 0;
-      font-size: 0.8rem;
+
+    /* Clean Navigation Header */
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid #ddd;
+      padding: 0 20px;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1000px;
+      margin: 0 auto;
+      height: 60px;
+    }
+
+    .brand {
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      gap: 20px;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #666;
+      font-size: 0.95rem;
+      padding: 5px 0;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: #007bff;
+    }
+
+    nav a.active {
+      color: #007bff;
+      font-weight: bold;
+      border-bottom: 2px solid #007bff;
+    }
+
+    main {
+      padding: 2rem 1rem;
     }
   </style>
 </head>
 <body>
 
-  <!-- Header & Navigation -->
   <header>
     <nav>
+      <div class="brand">SNS翻訳用ツール</div>
       <ul>
-        <li><strong>SNS翻訳用ツール</strong></li>
-      </ul>
-      <ul>
-        <!-- Jekyll logic to check which page is active -->
         <li><a href="{{ site.baseurl }}/" {% if page.url == "/" %}class="active"{% endif %}>翻訳</a></li>
         <li><a href="{{ site.baseurl }}/csv_union.html" {% if page.url == "/csv_union.html" %}class="active"{% endif %}>CSV Union</a></li>
         <li><a href="{{ site.baseurl }}/imagecut.html" {% if page.url == "/imagecut.html" %}class="active"{% endif %}>画像分割ツール</a></li>
@@ -37,7 +81,6 @@
     </nav>
   </header>
 
-  <!-- Main Content Area -->
   <main>
     {{ content }}
   </main>
