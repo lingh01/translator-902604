@@ -10,35 +10,80 @@
         .error-msg { color: #d93526; background: #ffebee; padding: 1rem; border-radius: 8px; display: none; margin-bottom: 1rem; }
         textarea { font-family: monospace; font-size: 0.9rem; }
         .warning-msg { color: #856404; background: #fff3cd; padding: 1rem; border-radius: 8px; display: none; margin-bottom: 1rem; border: 1px solid #ffeeba; }
+        .grid-container { align-items: start; gap: 2rem; }
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 40px;
+            margin-bottom: 0.5rem;
+        }
+
+        .field-header label { margin-bottom: 0; }
+
+        #copyBtn, #editBtn { 
+            padding: 4px 12px; 
+            font-size: 0.8rem; 
+            width: auto; 
+            margin-bottom: 0;
+        }
     </style>
     <script src="names.js"></script>
 </head>
 
 <body>
     <main class="container">
-        <h1>Social Media Post Auto-Translator</h1>
-        
-        <label for="jpInput">Paste Japanese Source Text</label>
-        <textarea id="jpInput" rows="8" placeholder="Paste the Japanese post here..."></textarea>
-        <div id="warningMessage" class="warning-msg"></div>
-        <div id="errorMessage" class="error-msg"></div>
-        <div id="errorMessage" class="error-msg"></div>
+    <h1>Social Media Post Auto-Translator</h1>
 
-        <fieldset>
-            <legend>Include Languages:</legend>
-            <label><input type="checkbox" id="langEn" checked> English</label>
-            <label><input type="checkbox" id="langZh" checked> Chinese</label>
-            <label><input type="checkbox" id="langTh" checked> Thai</label>
-        </fieldset>
+        <div class="grid">
+            <!-- Left Column: Input & Settings -->
+            <section>
+            <div class="field-header">
+                <label for="jpInput">Paste Japanese Source Text</label>
+            </div>
+            <textarea id="jpInput" rows="10" placeholder="Paste the Japanese post here..."></textarea>
+                
+                <div id="warningMessage" class="warning-msg"></div>
+                <div id="errorMessage" class="error-msg"></div>
 
-        <button id="translateBtn" class="contrast">Detect & Generate Translation</button>
+                <fieldset>
+                    <legend>Include Languages:</legend>
+                    <label><input type="checkbox" id="langEn" checked> English</label>
+                    <label><input type="checkbox" id="langZh" checked> Chinese</label>
+                    <label><input type="checkbox" id="langTh" checked> Thai</label>
+                </fieldset>
 
-        <hr>
+                <button id="translateBtn" class="contrast">Detect & Generate Translation</button>
+            </section>
 
-        <label for="finalOutput">Final Output</label>
-        <textarea id="finalOutput" readonly rows="15"></textarea>
+            <!-- Right Column: Output -->
+            <section>
+                <div class="field-header">
+                    <label for="finalOutput">Final Output</label>
+                    <div class="button-group">
+                        <button id="editBtn" class="secondary outline">編集</button>
+                        <button id="copyBtn" class="secondary outline">コピー</button>
+                    </div>
+                </div>
+                <textarea id="finalOutput" readonly rows="20"></textarea>
+            </section>
+        </div>
 
         <script>
+
+            let copyResetTimeout;
+
+            function resetCopyButton() {
+                clearTimeout(copyResetTimeout);
+                const copyBtn = document.getElementById('copyBtn');
+                copyBtn.textContent = "コピー";
+                copyBtn.classList.add('outline');
+            }
 
             const glossary_jp_to_en = {
                 "バトスピエントリーデッキ": "Battle Spirits Entry Deck",
@@ -292,6 +337,7 @@
             const warningDiv = document.getElementById('warningMessage');
 
             translateBtn.addEventListener('click', () => {
+                resetCopyButton();
                 const rawText = jpInput.value.trim();
                 const normalizedText = rawText.replace(/\s+/g, ' ');
                 
@@ -322,6 +368,9 @@
                     warningDiv.style.display = 'block';
                 }
             });
+            finalOutput.addEventListener('input', () => {
+                resetCopyButton();
+            });
             function renderOutput(template, matchGroups) {
                 const results = [];
                 const useEn = document.getElementById('langEn').checked;
@@ -337,6 +386,45 @@
 
                 finalOutput.value = prefixStr + results.join('\n\n') + hashtagStr;
             }
+
+            // Add this to your <script> block
+            const editBtn = document.getElementById('editBtn');
+
+            editBtn.addEventListener('click', () => {
+                const isReadOnly = finalOutput.readOnly;
+                
+                if (isReadOnly) {
+                    // Switch to Edit Mode
+                    finalOutput.readOnly = false;
+                    finalOutput.focus();
+                    editBtn.textContent = "完了";
+                    editBtn.style.backgroundColor = "var(--pico-ins-color)"; // Optional: green tint
+                    editBtn.style.color = "#fff"; // Optional: white text for contrast
+                } else {
+                    // Switch back to Read Only
+                    finalOutput.readOnly = true;
+                    editBtn.textContent = "編集";
+                    editBtn.style.backgroundColor = ""; // Reset color
+                    editBtn.style.color = ""; // Reset color
+                }
+            });
+
+            // Copy Button Functionality
+            const copyBtn = document.getElementById('copyBtn');
+            copyBtn.addEventListener('click', () => {
+                const output = document.getElementById('finalOutput');
+                if (!output.value) return;
+
+                navigator.clipboard.writeText(output.value).then(() => {
+                    clearTimeout(copyResetTimeout);
+                    copyBtn.textContent = "コピー完了!";
+                    copyBtn.classList.remove('outline');
+                    
+                    // Return to normal after 2 seconds
+                    copyResetTimeout = setTimeout(resetCopyButton, 2000);
+                });
+            });
+
         </script>
     </main>
 </body>
