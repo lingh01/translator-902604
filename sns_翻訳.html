@@ -117,45 +117,60 @@
                 if (lang === 'zh') return text;
                 
                 let localizedText = text;
+                let foundMatch = false;
+            
                 for (const [jp, en] of Object.entries(glossary_jp_to_en)) {
                     if (localizedText.includes(jp)) {
+                        foundMatch = true;
                         if (String(en).includes("/")) {
                             localizedText = localizedText.replace(jp, `${jp} ${en}`);
                         } else {
                             localizedText = localizedText.replace(jp, en);
                         }
-                    } else {
-                        missingTranslations.push(` ${localizedText} (英名未登録)`);
                     }
                 }
+            
+                // Warning for missing Battle Spirits title in English/Thai
+                if (lang !== 'zh' && !foundMatch) {
+                    const warningMsg = `BSタイトル: ${text} (英名未登録)`;
+                    if (!missingTranslations.includes(warningMsg)) {
+                        missingTranslations.push(warningMsg);
+                    }
+                }
+            
                 return localizedText;
             }
 
             function localizeDigimonPackName(text, lang) {
                 if (!text) return "";
                 let localizedText = text;
-
+                let foundMatch = false;
+            
                 if (lang === 'zh') {
                     for (const [jp, zh] of Object.entries(glossary_jp_to_zh)) {
                         if (localizedText.includes(jp)) {
                             localizedText = localizedText.replace(jp, zh);
                         }
                     }
-                    if (localizedText === text) {
-                        for (const [jp, en] of Object.entries(glossary_jp_to_en)) {
-                            if (localizedText.includes(jp)) {
-                                localizedText = localizedText.replace(jp, en);
-                            }
-                        }
-                    }
+                    // Simplified check: if it's still the same after glossary check, it's "not found"
+                    // (Optional: you can add a warning for Chinese here too if needed)
                 } else if (lang === 'en' || lang === 'th') {
                     for (const [jp, en] of Object.entries(glossary_jp_to_en)) {
                         if (localizedText.includes(jp)) {
+                            foundMatch = true;
                             localizedText = localizedText.replace(jp, en);
                         }
                     }
+            
+                    // Warning for missing Digimon Pack title in English/Thai
+                    if (!foundMatch) {
+                        const warningMsg = `デジモンパック名: ${text} (英名未登録)`;
+                        if (!missingTranslations.includes(warningMsg)) {
+                            missingTranslations.push(warningMsg);
+                        }
+                    }
                 }
-
+            
                 return localizedText;
             }
 
