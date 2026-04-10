@@ -1,8 +1,3 @@
----
-layout: default
-title: Home Page
----
-
 // グローバル変数
 let currentImage = null;
 let originalImageData = null;
