@@ -1,16 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>{{ page.title }}</title>
-    <link rel="stylesheet" href="/assets/css/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title }}</title>
+  
+  <!-- Pico CSS CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  
+  <style>
+    /* Simple tweak to highlight the "active" page */
+    nav a.active {
+      font-weight: bold;
+      border-bottom: 2px solid var(--primary);
+    }
+    footer {
+      padding: 2rem 0;
+      font-size: 0.8rem;
+    }
+  </style>
 </head>
 <body>
-    <nav>
-        <a href="/translator-902604/sns_translate.html">翻訳</a>
-        <a href="/translator-902604/csv_union.html">CSV Union</a>
-        <a href="/translator-902604/imagecut.html">画像分割ツール</a>
-    </nav>
 
-    {{ content }} <!-- This is where your page content will load -->
+  <!-- Header & Navigation -->
+  <header class="container">
+    <nav>
+      <ul>
+        <li><strong>My Portfolio</strong></li>
+      </ul>
+      <ul>
+        <!-- Jekyll logic to check which page is active -->
+        <li><a href="{{ site.baseurl }}/" {% if page.url == "/" %}class="active"{% endif %}>翻訳</a></li>
+        <li><a href="{{ site.baseurl }}/csv_union.html" {% if page.url == "/csv_union.html" %}class="active"{% endif %}>CSV Union</a></li>
+        <li><a href="{{ site.baseurl }}/imagecut.html" {% if page.url == "/imagecut.html" %}class="active"{% endif %}>画像分割ツール</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="container">
+    {{ content }}
+  </main>
+
+  <!-- Footer -->
+  <footer class="container">
+    <hr>
+    <small>Built with <a href="https://picocss.com">Pico.css</a> • © {{ site.time | date: '%Y' }}</small>
+  </footer>
+
 </body>
 </html>
