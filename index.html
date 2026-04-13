@@ -271,7 +271,7 @@ title: Home Page
                 },
                 {
                     name: "Gundam Parallel Card Reveal",
-                    pattern: /【収録カード紹介】パラレルカード「(.*?)」を紹介！ ブースターパック『(.*?)』は(.*?)(?:\(.\))?\s*発売.*?▽商品ページはこちら (https?:\/\/\S+)/,
+                    pattern: /【収録カード紹介】 パラレルカード「(.*?)」を紹介！ ブースターパック『(.*?)』は(.*?)(?:\(.\))?\s*発売.*?▽商品ページはこちら (https?:\/\/\S+)/,
                     prefix: (m) => {
                         missingTranslations.push(`ガンダム: ${m[1]} (英語名はインターネットで確認してください)`);
                         return `【Card Reveal / 卡牌介紹 / แนะนำการ์ด】\n\n`;
