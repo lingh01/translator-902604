@@ -270,6 +270,20 @@ title: Home Page
                     hashtags: "#GundamCardGame\n#GCG\n#高達卡牌"
                 },
                 {
+                    name: "Gundam Parallel Card Reveal",
+                    pattern: /【収録カード紹介】パラレルカード「(.*?)」を紹介！ ブースターパック『(.*?)』は(.*?)(?:\(.\))?\s*発売.*?▽商品ページはこちら (https?:\/\/\S+)/,
+                    prefix: (m) => {
+                        missingTranslations.push(`ガンダム: ${m[1]} (英語名はインターネットで確認してください)`);
+                        return `【Card Reveal / 卡牌介紹 / แนะนำการ์ด】\n\n`;
+                    },
+                    outputs: {
+                        en: (m) => `Introducing Parallel Card "${m[1]}"!\nBooster Pack [${m[2]}] releases on ${m[3]}!\n▽Product Info\n${m[4].replace('/jp/', '/asia-en/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        zh: (m) => `介紹平行卡「${m[1]}」!\n補充包『${m[2]}』將於 ${m[3]} 發售！\n▽商品資訊\n${m[4].replace('/jp/', '/zh-tw/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        th: (m) => `แนะนำ Parallel Card "${m[1]}"!\nBooster Pack "${m[2]}" วางจำหน่ายวันที่ ${m[3]}!\n▽ข้อมูลสินค้า\n${m[4].replace('/jp/', '/th/')}`
+                    },
+                    hashtags: "#GundamCardGame\n#GCG\n#高達卡牌"
+                },
+                {
                     name: "One Piece Booster Reveal",
                     // Matches normalized text: 
                     // $1: Code (OP-16), $2: Date (5/30), $3: Pack Name, $4: Card Name, $5: URL
