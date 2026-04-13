@@ -1,15 +1,14 @@
 ---
 layout: default
-title:  画像分割ツール
+title: 画像分割ツール
 ---
 
-<!-- Load CSS -->
+<!-- Load CSS and Fonts -->
 <link rel="stylesheet" href="styleimage.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
 
-<!-- Wrap everything in image-tool-wrapper to apply the background -->
 <style>
-    /* This removes the layout's default main padding for this page only */
+    /* Reset layout defaults for this page */
     main {
         padding: 0 !important;
         margin: 0 !important;
@@ -17,19 +16,18 @@ title:  画像分割ツール
     }
 </style>
 
-<!-- Load CSS -->
-<link rel="stylesheet" href="styleimage.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-
 <div class="image-tool-wrapper">
     <div class="container">
+        <!-- Header -->
         <header class="image-header">
             <h1><i class="fas fa-scissors"></i> 画像分割ツール</h1>
             <p class="subtitle">横長画像を縦に分割してダウンロード</p>
         </header>
 
-        <div class="tool-body"> <!-- Internal padding for the tool content -->
-            <!-- アップロードセクション -->
+        <!-- Main Tool Body (This provides the 40px padding) -->
+        <div class="tool-body">
+            
+            <!-- Upload Section -->
             <section class="upload-section">
                 <div class="upload-tabs">
                     <button class="tab-btn active" data-tab="dropzone">
@@ -40,7 +38,7 @@ title:  画像分割ツール
                     </button>
                 </div>
 
-                <!-- ドロップゾーン -->
+                <!-- Dropzone Area -->
                 <div class="upload-area active" id="dropzone-area">
                     <div class="dropzone" id="dropzone">
                         <i class="fas fa-cloud-upload-alt"></i>
@@ -53,7 +51,7 @@ title:  画像分割ツール
                     </div>
                 </div>
 
-                <!-- URL入力 -->
+                <!-- URL Input Area -->
                 <div class="upload-area" id="url-area">
                     <div class="url-input-container">
                         <i class="fas fa-link"></i>
@@ -64,7 +62,7 @@ title:  画像分割ツール
                 </div>
             </section>
 
-            <!-- プレビューセクション -->
+            <!-- Preview Section (Initially Hidden) -->
             <section class="preview-section" id="previewSection" style="display: none;">
                 <h2><i class="fas fa-image"></i> プレビュー</h2>
                 
@@ -106,12 +104,12 @@ title:  画像分割ツール
                     <i class="fas fa-redo"></i> 別の画像を読み込む
                 </button>
             </section>
-        </div>
+        </div> <!-- End tool-body -->
 
         <footer>
             <p>&copy; 2026 画像分割ツール | デスクトップ専用</p>
         </footer>
-    </div>
-</div>
+    </div> <!-- End container -->
+</div> <!-- End image-tool-wrapper -->
 
 <script src="imageedit.js"></script>
