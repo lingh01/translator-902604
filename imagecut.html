@@ -3,104 +3,103 @@ layout: default
 title:  画像分割ツール
 ---
 
-
+<!-- Load CSS -->
 <link rel="stylesheet" href="styleimage.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
 
+<!-- Wrap everything in image-tool-wrapper to apply the background -->
+<div class="image-tool-wrapper">
+    <div class="container">
+        <!-- Changed <head> to <header class="image-header"> -->
+        <header class="image-header">
+            <h1><i class="fas fa-scissors"></i> 画像分割ツール</h1>
+            <p class="subtitle">横長画像を縦に分割してダウンロード</p>
+        </header>
 
-<div class="container">
-        <head>
-        <h1><i class="fas fa-scissors"></i> 画像分割ツール</h1>
-        <p class="subtitle">横長画像を縦に分割してダウンロード</p>
-        </head>
-    <main>
-        <!-- アップロードセクション -->
-        <section class="upload-section">
-            <div class="upload-tabs">
-                <button class="tab-btn active" data-tab="dropzone">
-                    <i class="fas fa-upload"></i> ファイルをドロップ
-                </button>
-                <button class="tab-btn" data-tab="url">
-                    <i class="fas fa-link"></i> URLから読み込み
-                </button>
-            </div>
-
-            <!-- ドロップゾーン -->
-            <div class="upload-area active" id="dropzone-area">
-                <div class="dropzone" id="dropzone">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>画像をここにドラッグ&ドロップ</p>
-                    <p class="or-text">または</p>
-                    <button class="btn-primary" id="selectFileBtn">ファイルを選択</button>
-                    <input type="file" id="fileInput" accept="image/*" hidden>
-                    <p class="file-info">対応形式: JPG, PNG, GIF, WebP</p>
-                    <p class="paste-hint"><i class="fas fa-keyboard"></i> Ctrl+V で画像を貼り付けもできます</p>
+        <main>
+            <!-- アップロードセクション -->
+            <section class="upload-section">
+                <div class="upload-tabs">
+                    <button class="tab-btn active" data-tab="dropzone">
+                        <i class="fas fa-upload"></i> ファイルをドロップ
+                    </button>
+                    <button class="tab-btn" data-tab="url">
+                        <i class="fas fa-link"></i> URLから読み込み
+                    </button>
                 </div>
-            </div>
 
-            <!-- URL入力 -->
-            <div class="upload-area" id="url-area">
-                <div class="url-input-container">
-                    <i class="fas fa-link"></i>
-                    <input type="text" id="urlInput" placeholder="画像のURLを入力してください" />
-                    <button class="btn-primary" id="loadUrlBtn">読み込み</button>
+                <!-- ドロップゾーン -->
+                <div class="upload-area active" id="dropzone-area">
+                    <div class="dropzone" id="dropzone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>画像をここにドラッグ&ドロップ</p>
+                        <p class="or-text">または</p>
+                        <button class="btn-primary" id="selectFileBtn">ファイルを選択</button>
+                        <input type="file" id="fileInput" accept="image/*" hidden>
+                        <p class="file-info">対応形式: JPG, PNG, GIF, WebP</p>
+                        <p class="paste-hint"><i class="fas fa-keyboard"></i> Ctrl+V で画像を貼り付けもできます</p>
+                    </div>
                 </div>
-                <p class="url-info"><i class="fas fa-info-circle"></i> CORS対応の画像URLのみ読み込めます</p>
-            </div>
-        </section>
 
-        <!-- プレビューセクション -->
-        <section class="preview-section" id="previewSection" style="display: none;">
-            <h2><i class="fas fa-image"></i> プレビュー</h2>
-            
-            <!-- 元画像情報 -->
-            <div class="image-info" id="imageInfo">
-                <span><i class="fas fa-file-image"></i> <span id="fileName">-</span></span>
-                <span><i class="fas fa-expand-arrows-alt"></i> <span id="imageDimensions">-</span></span>
-                <span><i class="fas fa-file"></i> <span id="imageFormat">-</span></span>
-            </div>
-
-            <!-- 分割位置調整 -->
-            <div class="split-control">
-                <label for="splitPosition">
-                    <i class="fas fa-arrows-alt-h"></i> 分割位置: <span id="splitPercentage">50</span>%
-                </label>
-                <input type="range" id="splitPosition" min="10" max="90" value="50" step="1">
-                <div class="split-markers">
-                    <span>左寄り</span>
-                    <span>中央</span>
-                    <span>右寄り</span>
+                <!-- URL入力 -->
+                <div class="upload-area" id="url-area">
+                    <div class="url-input-container">
+                        <i class="fas fa-link"></i>
+                        <input type="text" id="urlInput" placeholder="画像のURLを入力してください" />
+                        <button class="btn-primary" id="loadUrlBtn">読み込み</button>
+                    </div>
+                    <p class="url-info"><i class="fas fa-info-circle"></i> CORS対応の画像URLのみ読み込めます</p>
                 </div>
-            </div>
+            </section>
 
-            <!-- キャンバスプレビュー -->
-            <div class="canvas-container">
-                <div class="canvas-wrapper">
-                    <canvas id="previewCanvas"></canvas>
-                    <div class="split-line" id="splitLine"></div>
+            <!-- プレビューセクション -->
+            <section class="preview-section" id="previewSection" style="display: none;">
+                <h2><i class="fas fa-image"></i> プレビュー</h2>
+                
+                <div class="image-info" id="imageInfo">
+                    <span><i class="fas fa-file-image"></i> <span id="fileName">-</span></span>
+                    <span><i class="fas fa-expand-arrows-alt"></i> <span id="imageDimensions">-</span></span>
+                    <span><i class="fas fa-file"></i> <span id="imageFormat">-</span></span>
                 </div>
-            </div>
 
-            <!-- ダウンロードボタン -->
-            <div class="download-section">
-                <button class="btn-download btn-left" id="downloadLeft">
-                    <i class="fas fa-download"></i> 左半分をダウンロード
+                <div class="split-control">
+                    <label for="splitPosition">
+                        <i class="fas fa-arrows-alt-h"></i> 分割位置: <span id="splitPercentage">50</span>%
+                    </label>
+                    <input type="range" id="splitPosition" min="10" max="90" value="50" step="1">
+                    <div class="split-markers">
+                        <span>左寄り</span>
+                        <span>中央</span>
+                        <span>右寄り</span>
+                    </div>
+                </div>
+
+                <div class="canvas-container">
+                    <div class="canvas-wrapper">
+                        <canvas id="previewCanvas"></canvas>
+                        <div class="split-line" id="splitLine"></div>
+                    </div>
+                </div>
+
+                <div class="download-section">
+                    <button class="btn-download btn-left" id="downloadLeft">
+                        <i class="fas fa-download"></i> 左半分をダウンロード
+                    </button>
+                    <button class="btn-download btn-right" id="downloadRight">
+                        <i class="fas fa-download"></i> 右半分をダウンロード
+                    </button>
+                </div>
+
+                <button class="btn-reset" id="resetBtn">
+                    <i class="fas fa-redo"></i> 別の画像を読み込む
                 </button>
-                <button class="btn-download btn-right" id="downloadRight">
-                    <i class="fas fa-download"></i> 右半分をダウンロード
-                </button>
-            </div>
+            </section>
+        </main>
 
-            <!-- リセットボタン -->
-            <button class="btn-reset" id="resetBtn">
-                <i class="fas fa-redo"></i> 別の画像を読み込む
-            </button>
-        </section>
-    </main>
-
-    <footer>
-        <p>&copy; 2026 画像分割ツール | デスクトップ専用</p>
-    </footer>
+        <footer>
+            <p>&copy; 2026 画像分割ツール | デスクトップ専用</p>
+        </footer>
+    </div>
 </div>
 
 <script src="imageedit.js"></script>
