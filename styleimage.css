@@ -4,20 +4,31 @@
     box-sizing: border-box;
 }
 
+
+
+/* Update this block */
 .image-tool-wrapper {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #5a6c7d 0%, #3d4f5d 100%);
-    min-height: 100vh;
-    padding: 20px;
-    color: #333;
+    /* Remove padding: 20px; */
+    padding: 40px 20px; /* Padding for the content inside, not the edges */
+    min-height: calc(100vh - 60px); /* Subtract the height of your nav bar */
+    width: 100%;
+    margin: 0;
 }
 
+/* Ensure the body doesn't show through */
+body {
+    background: #3d4f5d; /* Match the bottom of your gradient */
+}
+
+/* Ensure container doesn't look like a double-box */
 .container {
-    max-width: 1200px;
+    max-width: 1000px; /* Match the width of your nav bar */
     margin: 0 auto;
     background: white;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     overflow: hidden;
 }
 
