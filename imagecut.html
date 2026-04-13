@@ -8,15 +8,27 @@ title:  画像分割ツール
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
 
 <!-- Wrap everything in image-tool-wrapper to apply the background -->
+<style>
+    /* This removes the layout's default main padding for this page only */
+    main {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+</style>
+
+<!-- Load CSS -->
+<link rel="stylesheet" href="styleimage.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+
 <div class="image-tool-wrapper">
     <div class="container">
-        <!-- Changed <head> to <header class="image-header"> -->
         <header class="image-header">
             <h1><i class="fas fa-scissors"></i> 画像分割ツール</h1>
             <p class="subtitle">横長画像を縦に分割してダウンロード</p>
         </header>
 
-        <main>
+        <main style="padding: 40px;"> <!-- Internal padding for the tool content -->
             <!-- アップロードセクション -->
             <section class="upload-section">
                 <div class="upload-tabs">
