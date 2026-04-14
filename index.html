@@ -256,6 +256,18 @@ title: Home Page
                     hashtags: "#BattleSpirits"
                 },
                 {
+                    name: "Battlespirit Glitter Card",
+                    // $1: ID, $2: Date, $3: Full Pack Name, $4: Pack Name (repeat), $5: Date (repeat), $6: Status, $7: URL
+                    pattern: /【(.*?) SECRET公開】\s*(.*?)(?:\(.\))?発売『(.*?)』のSECRET版カードを公開！.*?『ブースターパック (.*?)』は(.*?)(?:\(.\))?(発売|発売中)！\s*🔽商品ページ\s*(https?:\/\/\S+)/,
+                    prefix: (m) => `【${m[1]} SECRET Reveal / SECRET公開 / เผยการ์ด SECRET】\n\n`,
+                    outputs: {
+                        en: (m) => `Revealing the SECRET version cards from [${localizeBSName(m[3], 'en')}] releasing on ${m[2]}!\nStarting from this release, SECRET versions will feature a special foil processing.\n\n[${localizeBSName(m[3], 'en')}] will be available starting ${m[2]}!\n\n▽Product Page:\n${transformLink(m[7], 'en', m[3].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        zh: (m) => `公開${m[2]}發售的《${m[3]}》SECRET版卡牌！\n從本次開始，SECRET版將採用特別的閃卡加工。\n《${m[3]}》將於 ${m[2]} 發售！\n\n▽商品頁面：\n${transformLink(m[7], 'zh', m[3].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        th: (m) => `เผยการ์ดเวอร์ชัน SECRET ของ “${localizeBSName(m[3], 'th')}” ที่จะวางจำหน่ายในวันที่ ${m[2]}!\nตั้งแต่ชุดนี้เป็นต้นไป การ์ดเวอร์ชัน SECRET จะใช้เทคนิคเคลือบฟอยล์แบบพิเศษ \n“${localizeBSName(m[3], 'th')}” มีกำหนดวางจำหน่าย ${m[2]} นี้!\n\n▽หน้าสินค้า:\n${transformLink(m[7], 'th', m[3].includes("エターナル"))}`
+                    },
+                    hashtags: "#BattleSpirits"
+                },
+                {
                     name: "Gundam Card Reveal",
                     pattern: /【収録カード紹介】 「(.*?)」を紹介！ ブースターパック『(.*?)』は(.*?)(?:\(.\))?\s*発売.*?▽商品ページはこちら (https?:\/\/\S+)/,
                     prefix: (m) => {
