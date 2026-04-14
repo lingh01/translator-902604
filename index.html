@@ -101,7 +101,8 @@ title: Home Page
                 "永皇の輝き": "/ Radiance of the Eternal Emperor",
                 "ブースターパック DUAL REVOLUTION": "BOOSTER PACK DUAL REVOLUTION",
                 "スタートデッキ DIGIMON BEATBREAK": "STARTER DECK DIGIMON BEATBREAK",
-                "幻惑の翔風": "/ Enchanted Skywind"
+                "幻惑の翔風": "/ Enchanted Skywind",
+                "ハヤケン・サレナ": "hayaken_sarena"
             }
 
             const glossary_jp_to_zh = {
@@ -261,9 +262,21 @@ title: Home Page
                     pattern: /【(.*?) SECRET公開】\s*(.*?)(?:\(.\))?発売『(.*?)』のSECRET版カードを公開！.*?『ブースターパック (.*?)』は(.*?)(?:\(.\))?(発売|発売中)！\s*🔽商品ページ\s*(https?:\/\/\S+)/,
                     prefix: (m) => `【${m[1]} SECRET Reveal / SECRET公開 / เผยการ์ด SECRET】\n\n`,
                     outputs: {
-                        en: (m) => `Revealing the SECRET version cards from [${localizeBSName(m[3], 'en')}] releasing on ${m[2]}!\nStarting from this release, SECRET versions will feature a special foil processing.\n\n[${localizeBSName(m[3], 'en')}] will be available starting ${m[2]}!\n\n▽Product Page:\n${transformLink(m[7], 'en', m[3].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`,
-                        zh: (m) => `公開${m[2]}發售的《${m[3]}》SECRET版卡牌！\n從本次開始，SECRET版將採用特別的閃卡加工。\n《${m[3]}》將於 ${m[2]} 發售！\n\n▽商品頁面：\n${transformLink(m[7], 'zh', m[3].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`,
-                        th: (m) => `เผยการ์ดเวอร์ชัน SECRET ของ “${localizeBSName(m[3], 'th')}” ที่จะวางจำหน่ายในวันที่ ${m[2]}!\nตั้งแต่ชุดนี้เป็นต้นไป การ์ดเวอร์ชัน SECRET จะใช้เทคนิคเคลือบฟอยล์แบบพิเศษ \n“${localizeBSName(m[3], 'th')}” มีกำหนดวางจำหน่าย ${m[2]} นี้!\n\n▽หน้าสินค้า:\n${transformLink(m[7], 'th', m[3].includes("エターナル"))}`
+                        en: (m) => `Revealing the SECRET version cards from [${localizeBSName(m[3], 'en')}] releasing on ${m[2]}!\nStarting from this release, SECRET versions will feature a special foil processing.\n\n[${localizeBSName(m[3], 'en')}] will be available starting ${m[2]}!\n\n🔽Product Page:\n${transformLink(m[7], 'en', m[3].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        zh: (m) => `公開${m[2]}發售的《${m[3]}》SECRET版卡牌！\n從本次開始，SECRET版將採用特別的閃卡加工。\n\n《${m[3]}》將於 ${m[2]} 發售！\n\n🔽商品頁面：\n${transformLink(m[7], 'zh', m[3].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        th: (m) => `เผยการ์ดเวอร์ชัน SECRET ของ “${localizeBSName(m[3], 'th')}” ที่จะวางจำหน่ายในวันที่ ${m[2]}!\nตั้งแต่ชุดนี้เป็นต้นไป การ์ดเวอร์ชัน SECRET จะใช้เทคนิคเคลือบฟอยล์แบบพิเศษ \n“${localizeBSName(m[3], 'th')}” มีกำหนดวางจำหน่าย ${m[2]} นี้!\n\n🔽หน้าสินค้า:\n${transformLink(m[7], 'th', m[3].includes("エターナル"))}`
+                    },
+                    hashtags: "#BattleSpirits"
+                },
+                {
+                    name: "Battlespirit Over Secret Reveal",
+                    // $1: Code, $2: Date, $3: Pack Name, $4: Card Name, $5: Artist, $6: URL
+                    pattern: /【(.*?) SECRET公開】\s*(.*?)(?:\(.\))?発売の『(.*?)』でごくまれに手に入る特別なSECRETカード「OVER SECRET」を公開！\s*「(.*?)」が(.*?)さん描き下ろしのイラスト違い版で登場。.*?🔽商品ページ\s*(https?:\/\/\S+)/,
+                    prefix: (m) => `【${m[1]} SECRET Reveal / SECRET公開 / เผยการ์ด SECRET】\n\n`,
+                    outputs: {
+                        en: (m) => `Revealing the special SECRET card "OVER SECRET", which can be obtained very rarely in [${localizeBSName(m[3], 'en')}] releasing on ${m[2]}!\n"${m[4]}" appears in an alternate illustration version newly drawn by ${localizeBSName(m[5], 'en')}.\nIt features a luxurious design using gold foil!\n\n🔽Details:\n${transformLink(m[6], 'en', m[3].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        zh: (m) => `公開 ${m[2]} 發售的《${localizeBSName(m[3], 'zh')}》中極罕見能獲得的特別SECRET卡牌「OVER SECRET」！\n「${m[4]}」以 ${localizeBSName(m[5], 'zh')} 全新繪製的異面插圖版本登場。\n是使用了金箔的豪華設計！\n\n🔽詳細：\n${transformLink(m[6], 'zh', m[3].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        th: (m) => `เผยการ์ด SECRET สุดพิเศษ "OVER SECRET" ที่สามารถพบได้ยากมากใน "${localizeBSName(m[3], 'th')}" ที่จะวางจำหน่ายในวันที่ ${m[2]}!\n「${m[4]}」 ปรากฏตัวในเวอร์ชันภาพอิลลัสต์แบบอื่นที่วาดขึ้นใหม่โดย ${localizeBSName(m[5], 'th')}\nมาพร้อมกับดีไซน์สุดหรูหราที่ใช้ฟอยล์สีทอง!\n\n🔽รายละเอียด:\n${transformLink(m[6], 'th', m[3].includes("エターナル"))}`
                     },
                     hashtags: "#BattleSpirits"
                 },
@@ -275,9 +288,9 @@ title: Home Page
                         return `【Card Reveal / 卡牌介紹 / แนะนำการ์ด】\n\n`;
                     },
                     outputs: {
-                        en: (m) => `Introducing "${m[1]}"!\nBooster Pack [${m[2]}] releases on ${m[3]}!\n▽Product Info\n${m[4].replace('/jp/', '/asia-en/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
-                        zh: (m) => `介紹「${m[1]}」!\n補充包『${m[2]}』將於 ${m[3]} 發售！\n▽商品資訊\n${m[4].replace('/jp/', '/zh-tw/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
-                        th: (m) => `แนะนำการ์ด "${m[1]}"!\nBooster Pack "${m[2]}" วางจำหน่ายวันที่ ${m[3]}!\n▽ข้อมูลสินค้า\n${m[4].replace('/jp/', '/th/')}`
+                        en: (m) => `Introducing "${m[1]}"!\nBooster Pack [${m[2]}] releases on ${m[3]}!\n\n▽Product Info\n${m[4].replace('/jp/', '/asia-en/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        zh: (m) => `介紹「${m[1]}」!\n補充包『${m[2]}』將於 ${m[3]} 發售！\n\n▽商品資訊\n${m[4].replace('/jp/', '/zh-tw/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        th: (m) => `แนะนำการ์ด "${m[1]}"!\nBooster Pack "${m[2]}" วางจำหน่ายวันที่ ${m[3]}!\n\n▽ข้อมูลสินค้า\n${m[4].replace('/jp/', '/th/')}`
                     },
                     hashtags: "#GundamCardGame\n#GCG\n#高達卡牌"
                 },
@@ -304,15 +317,15 @@ title: Home Page
                     outputs: {
                         en: (m) => {
                             const opUrl = m[5].replace('onepiece', 'asia-en.onepiece').replace('.html', '.php');
-                            return `Introducing the Character Card "${getOnePieceName(m[4])}"! This card will be included in Booster Pack: ${m[3]} releasing on ${m[2]}!\n▼Product Info\n${opUrl}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                            return `Introducing the Character Card "${getOnePieceName(m[4])}"! This card will be included in Booster Pack: ${m[3]} releasing on ${m[2]}!\n\n▼Product Info\n${opUrl}\n\n━━━━━━━━━━━━━━━━━━━━`;
                         },
                         zh: (m) => {
                             const opUrl = m[5].replace('onepiece', 'asia-tc.onepiece').replace('.html', '.php');
-                            return `我將向您介紹將於${m[2]} 發售的補充包：${m[3]} 收錄卡片！這次是角色卡「${getOnePieceName(m[4])}」。\n▼商品資訊\n${opUrl}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                            return `我將向您介紹將於${m[2]} 發售的補充包：${m[3]} 收錄卡片！這次是角色卡「${getOnePieceName(m[4])}」。\n\n▼商品資訊\n${opUrl}\n\n━━━━━━━━━━━━━━━━━━━━`;
                         },
                         th: (m) => {
                             const opUrl = m[5].replace('onepiece', 'asia-th.onepiece').replace('.html', '.php');
-                            return `แนะนำการ์ดจาก Booster Pack ${m[3]} วางจำหน่าย ${m[2]} นี้! ครั้งนี้เป็นการ์ดตัวละคร "${getOnePieceName(m[4])}"!\n▼ข้อมูลสินค้า คลิกที่นี่\n${opUrl}`;
+                            return `แนะนำการ์ดจาก Booster Pack ${m[3]} วางจำหน่าย ${m[2]} นี้! ครั้งนี้เป็นการ์ดตัวละคร "${getOnePieceName(m[4])}"!\n\n▼ข้อมูลสินค้า คลิกที่นี่\n${opUrl}`;
                         }
                     },
                     hashtags: "#ONEPIECE\n#ONEPIECECardgame\n#航海王卡牌"
