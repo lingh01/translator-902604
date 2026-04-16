@@ -316,15 +316,15 @@ title: Home Page
                     outputs: {
                         en: (m) => {
                             const packEn = localizeBSName(m[4], 'en').replace("バトルスピリッツ", "Battle Spirits");
-                            return `Soul Magic cards featuring illustrations of popular past Spirits arrive!\nRevealing the SECRET version of "${m[3]}" featuring a newly drawn illustration of "${m[2]}".\n[${packEn}] is scheduled to release on ${m[5]}!\n\n▽Product Page:\n${transformLink(m[7], 'en', m[4].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                            return `Soul Magic cards featuring illustrations of popular past Spirits arrive!\nRevealing the SECRET version of "${m[3]}" featuring a newly drawn illustration of "${m[2]}".\n[${packEn}] is scheduled to release on ${m[5]}!\n\n🔽Product Page:\n${transformLink(m[7], 'en', m[4].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`;
                         },
                         zh: (m) => {
                             const packZh = m[4].replace("バトルスピリッツ", "Battle Spirits");
-                            return `全幅插圖SECRET靈魂魔法卡採用歷代人氣Spirit的插圖登場！\n公開使用「${m[2]}」全新繪製插畫的「${m[3]}」SECRET版。\n《${packZh}》將於 ${m[5]} 發售！\n\n▽商品頁面：\n${transformLink(m[7], 'zh', m[4].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                            return `全幅插圖SECRET靈魂魔法卡採用歷代人氣Spirit的插圖登場！\n公開使用「${m[2]}」全新繪製插畫的「${m[3]}」SECRET版。\n《${packZh}》將於 ${m[5]} 發售！\n\n🔽商品頁面：\n${transformLink(m[7], 'zh', m[4].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`;
                         },
                         th: (m) => {
                             const packTh = localizeBSName(m[4], 'th').replace("バトルスピリッツ", "Battle Spirits");
-                            return `การ์ด Soul Magic มาพร้อมกับภาพอิลลัสต์ของ Spirit ยอดฮิตในอดีต!\nเผยการ์ดเวอร์ชัน SECRET ของ "${m[3]}" ที่มาพร้อมกับภาพวาดใหม่ของ "${m[2]}"\n“${packTh}” มีกำหนดวางจำหน่าย ${m[5]} นี้!\n\n▽หน้าสินค้า:\n${transformLink(m[7], 'th', m[4].includes("エターナル"))}`;
+                            return `การ์ด Soul Magic มาพร้อมกับภาพอิลลัสต์ของ Spirit ยอดฮิตในอดีต!\nเผยการ์ดเวอร์ชัน SECRET ของ "${m[3]}" ที่มาพร้อมกับภาพวาดใหม่ของ "${m[2]}"\n“${packTh}” มีกำหนดวางจำหน่าย ${m[5]} นี้!\n\n🔽หน้าสินค้า:\n${transformLink(m[7], 'th', m[4].includes("エターナル"))}`;
                         }
                     },
                     hashtags: "#BattleSpirits"
