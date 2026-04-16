@@ -311,7 +311,7 @@ title: Home Page
                 {
                     name: "Battlespirit Soul Magic Secret Reveal",
                     // $1: Code, $2: Spirit Name, $3: Magic Card Name, $4: Pack Name, $5: Date, $6: Status, $7: URL
-                    pattern: /【(.*?) SECRET公開】\s*ソウルマジックが歴代人気スピリットのイラストで登場！\s*「(.*?)」の新規描き下ろしイラストを使用した「(.*?)」のSECRET版を公開。\s*『(.*?)』は(.*?)(?:\(.\))?(発売予定|発売|発売中)！\s*🔽商品ページ\s*(https?:\/\/\S+)/,
+                    pattern: /【(.*?) SECRET公開】\s*ソウルマジックが歴代人気スピリットのイラストで登場！\s*「(.*?)」の新規描き下ろしイラストを使用した「(.*?)」のSECRET版を公開。\s*『(.*?)』は(.*?)(?:\(.\))?(発売予定|発売|発売中)！\s*(?:商品ページ|詳細)\s*(https?:\/\/\S+)/,
                     prefix: (m) => `【${m[1]} SECRET Reveal / SECRET公開 / เผยการ์ด SECRET】\n\n`,
                     outputs: {
                         en: (m) => {
