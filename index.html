@@ -309,6 +309,27 @@ title: Home Page
                     hashtags: "#GundamCardGame\n#GCG\n#高達卡牌"
                 },
                 {
+                    name: "Battlespirit Soul Magic Secret Reveal",
+                    // $1: Code, $2: Spirit Name, $3: Magic Card Name, $4: Pack Name, $5: Date, $6: Status, $7: URL
+                    pattern: /【(.*?) SECRET公開】\s*ソウルマジックが歴代人気スピリットのイラストで登場！\s*「(.*?)」の新規描き下ろしイラストを使用した「(.*?)」のSECRET版を公開。\s*『(.*?)』は(.*?)(?:\(.\))?(発売予定|発売|発売中)！\s*🔽商品ページ\s*(https?:\/\/\S+)/,
+                    prefix: (m) => `【${m[1]} SECRET Reveal / SECRET公開 / เผยการ์ด SECRET】\n\n`,
+                    outputs: {
+                        en: (m) => {
+                            const packEn = localizeBSName(m[4], 'en').replace("バトルスピリッツ", "Battle Spirits");
+                            return `Soul Magic cards featuring illustrations of popular past Spirits arrive!\nRevealing the SECRET version of "${m[3]}" featuring a newly drawn illustration of "${m[2]}".\n[${packEn}] is scheduled to release on ${m[5]}!\n\n▽Product Page:\n${transformLink(m[7], 'en', m[4].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        zh: (m) => {
+                            const packZh = m[4].replace("バトルスピリッツ", "Battle Spirits");
+                            return `全幅插圖SECRET靈魂魔法卡採用歷代人氣Spirit的插圖登場！\n公開使用「${m[2]}」全新繪製插畫的「${m[3]}」SECRET版。\n《${packZh}》將於 ${m[5]} 發售！\n\n▽商品頁面：\n${transformLink(m[7], 'zh', m[4].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        th: (m) => {
+                            const packTh = localizeBSName(m[4], 'th').replace("バトルスピリッツ", "Battle Spirits");
+                            return `การ์ด Soul Magic มาพร้อมกับภาพอิลลัสต์ของ Spirit ยอดฮิตในอดีต!\nเผยการ์ดเวอร์ชัน SECRET ของ "${m[3]}" ที่มาพร้อมกับภาพวาดใหม่ของ "${m[2]}"\n“${packTh}” มีกำหนดวางจำหน่าย ${m[5]} นี้!\n\n▽หน้าสินค้า:\n${transformLink(m[7], 'th', m[4].includes("エターナル"))}`;
+                        }
+                    },
+                    hashtags: "#BattleSpirits"
+                },
+                {
                     name: "One Piece Booster Reveal",
                     // Matches normalized text: 
                     // $1: Code (OP-16), $2: Date (5/30), $3: Pack Name, $4: Card Name, $5: URL
