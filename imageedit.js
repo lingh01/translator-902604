@@ -52,7 +52,7 @@ selectFileBtn.addEventListener('click', () => {
     fileInput.click();
 });
 
-// --- Update File Input ---
+// ファイル入力変更時 (Multiple files support)
 fileInput.addEventListener('change', (e) => {
     if (e.target.files.length > 0) {
         loadMultipleFiles(e.target.files);
@@ -65,23 +65,13 @@ dropzone.addEventListener('dragover', (e) => {
     dropzone.classList.add('drag-over');
 });
 
-// --- Update Drag & Drop ---
+// ドロップ処理 (Multiple files support)
 dropzone.addEventListener('drop', (e) => {
     e.preventDefault();
     dropzone.classList.remove('drag-over');
     
     if (e.dataTransfer.files.length > 0) {
         loadMultipleFiles(e.dataTransfer.files);
-    }
-});
-
-dropzone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropzone.classList.remove('drag-over');
-    
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-        loadImageFromFile(file);
     }
 });
 
@@ -99,6 +89,8 @@ urlInput.addEventListener('keypress', (e) => {
         loadUrlBtn.click();
     }
 });
+
+// 複数ファイルを読み込む
 function loadMultipleFiles(fileList) {
     currentImages = []; // Reset array
     const files = Array.from(fileList).filter(file => file.type.startsWith('image/'));
@@ -129,18 +121,6 @@ function loadMultipleFiles(fileList) {
         };
         reader.readAsDataURL(file);
     });
-}
-
-// ファイルから画像を読み込む
-function loadImageFromFile(file) {
-    imageName = file.name.split('.')[0];
-    imageFormat = file.type;
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        loadImage(e.target.result, file.name);
-    };
-    reader.readAsDataURL(file);
 }
 
 // URLから画像を読み込む
@@ -177,6 +157,23 @@ function loadImageFromUrl(url) {
     img.src = url;
 }
 
+// 単一の画像を読み込む (URLやペースト用)
+function loadImage(src, name) {
+    const img = new Image();
+    img.onload = () => {
+        // Wrap the single image in the array so the batch downloader works for URLs & Paste
+        currentImages = [{
+            img: img,
+            name: name.split('.')[0],
+            format: imageFormat, 
+            originalName: name
+        }];
+        
+        showPreview(0);
+    };
+    img.src = src;
+}
+
 // フォーマット名を取得
 function getFormatName(format) {
     const formats = {
@@ -188,7 +185,7 @@ function getFormatName(format) {
     return formats[format] || 'Unknown';
 }
 
-// プレビューを描画
+// プレビューの情報を更新してキャンバスに描画を指示
 function showPreview(index) {
     if (currentImages.length === 0) return;
     
@@ -196,13 +193,40 @@ function showPreview(index) {
     const activeImageObj = currentImages[index];
     currentImage = activeImageObj.img; // Set for the preview drawing
     
-    fileName.textContent = `${activeImageObj.originalName} (+${currentImages.length - 1} other files)`;
+    // Display (+X other files) if more than 1 image is uploaded
+    let displayFileName = activeImageObj.originalName;
+    if (currentImages.length > 1) {
+        displayFileName += ` (+${currentImages.length - 1} other files)`;
+    }
+    
+    fileName.textContent = displayFileName;
     imageDimensions.textContent = `${currentImage.width} × ${currentImage.height}px`;
     imageFormatText.textContent = getFormatName(activeImageObj.format);
     
     previewSection.style.display = 'block';
+    
+    // キャンバスに描画
     drawPreview();
+    
     previewSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// プレビューを描画 (Restored missing function)
+function drawPreview() {
+    if (!currentImage) return;
+    
+    const canvas = previewCanvas;
+    const ctx = canvas.getContext('2d');
+    
+    // キャンバスサイズを画像サイズに設定
+    canvas.width = currentImage.width;
+    canvas.height = currentImage.height;
+    
+    // 画像を描画
+    ctx.drawImage(currentImage, 0, 0);
+    
+    // 分割線を更新
+    updateSplitLine();
 }
 
 // 分割線を更新
@@ -227,7 +251,7 @@ downloadRight.addEventListener('click', () => {
     downloadHalf('right');
 });
 
-// 半分をダウンロード
+// 半分をダウンロード (Batch download)
 function downloadHalf(side) {
     if (currentImages.length === 0) return;
     
