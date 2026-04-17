@@ -1,5 +1,7 @@
 // グローバル変数
 let currentImage = null;
+let currentImages = []; // Array to hold multiple image objects
+let activePreviewIndex = 0; // The image currently shown in the preview
 let originalImageData = null;
 let imageFormat = 'image/png';
 let imageName = 'image';
@@ -50,11 +52,10 @@ selectFileBtn.addEventListener('click', () => {
     fileInput.click();
 });
 
-// ファイル入力変更時
+// --- Update File Input ---
 fileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-        loadImageFromFile(file);
+    if (e.target.files.length > 0) {
+        loadMultipleFiles(e.target.files);
     }
 });
 
@@ -64,8 +65,14 @@ dropzone.addEventListener('dragover', (e) => {
     dropzone.classList.add('drag-over');
 });
 
-dropzone.addEventListener('dragleave', () => {
+// --- Update Drag & Drop ---
+dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
     dropzone.classList.remove('drag-over');
+    
+    if (e.dataTransfer.files.length > 0) {
+        loadMultipleFiles(e.dataTransfer.files);
+    }
 });
 
 dropzone.addEventListener('drop', (e) => {
@@ -92,6 +99,37 @@ urlInput.addEventListener('keypress', (e) => {
         loadUrlBtn.click();
     }
 });
+function loadMultipleFiles(fileList) {
+    currentImages = []; // Reset array
+    const files = Array.from(fileList).filter(file => file.type.startsWith('image/'));
+    
+    if (files.length === 0) return;
+
+    let loadedCount = 0;
+
+    files.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                currentImages.push({
+                    img: img,
+                    name: file.name.split('.')[0],
+                    format: file.type,
+                    originalName: file.name
+                });
+
+                loadedCount++;
+                // Once all images are loaded into memory, show the first one as a preview
+                if (loadedCount === files.length) {
+                    showPreview(0); 
+                }
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
 
 // ファイルから画像を読み込む
 function loadImageFromFile(file) {
@@ -139,29 +177,6 @@ function loadImageFromUrl(url) {
     img.src = url;
 }
 
-// 画像を読み込んでキャンバスに描画
-function loadImage(src, name) {
-    const img = new Image();
-    img.onload = () => {
-        currentImage = img;
-        
-        // 画像情報を表示
-        fileName.textContent = name;
-        imageDimensions.textContent = `${img.width} × ${img.height}px`;
-        imageFormatText.textContent = getFormatName(imageFormat);
-        
-        // プレビューセクションを表示
-        previewSection.style.display = 'block';
-        
-        // キャンバスに描画
-        drawPreview();
-        
-        // スムーズスクロール
-        previewSection.scrollIntoView({ behavior: 'smooth' });
-    };
-    img.src = src;
-}
-
 // フォーマット名を取得
 function getFormatName(format) {
     const formats = {
@@ -174,21 +189,20 @@ function getFormatName(format) {
 }
 
 // プレビューを描画
-function drawPreview() {
-    if (!currentImage) return;
+function showPreview(index) {
+    if (currentImages.length === 0) return;
     
-    const canvas = previewCanvas;
-    const ctx = canvas.getContext('2d');
+    activePreviewIndex = index;
+    const activeImageObj = currentImages[index];
+    currentImage = activeImageObj.img; // Set for the preview drawing
     
-    // キャンバスサイズを画像サイズに設定
-    canvas.width = currentImage.width;
-    canvas.height = currentImage.height;
+    fileName.textContent = `${activeImageObj.originalName} (+${currentImages.length - 1} other files)`;
+    imageDimensions.textContent = `${currentImage.width} × ${currentImage.height}px`;
+    imageFormatText.textContent = getFormatName(activeImageObj.format);
     
-    // 画像を描画
-    ctx.drawImage(currentImage, 0, 0);
-    
-    // 分割線を更新
-    updateSplitLine();
+    previewSection.style.display = 'block';
+    drawPreview();
+    previewSection.scrollIntoView({ behavior: 'smooth' });
 }
 
 // 分割線を更新
@@ -215,48 +229,51 @@ downloadRight.addEventListener('click', () => {
 
 // 半分をダウンロード
 function downloadHalf(side) {
-    if (!currentImage) return;
+    if (currentImages.length === 0) return;
     
     const splitPercent = parseFloat(splitPosition.value) / 100;
-    const splitX = Math.round(currentImage.width * splitPercent);
     
-    // 新しいキャンバスを作成
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    if (side === 'left') {
-        // 左半分
-        canvas.width = splitX;
-        canvas.height = currentImage.height;
-        ctx.drawImage(
-            currentImage,
-            0, 0, splitX, currentImage.height,
-            0, 0, splitX, currentImage.height
-        );
-    } else {
-        // 右半分
-        canvas.width = currentImage.width - splitX;
-        canvas.height = currentImage.height;
-        ctx.drawImage(
-            currentImage,
-            splitX, 0, currentImage.width - splitX, currentImage.height,
-            0, 0, currentImage.width - splitX, currentImage.height
-        );
-    }
-    
-    // ダウンロード
-    canvas.toBlob((blob) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        
-        // ファイル拡張子を取得
-        const extension = getExtension(imageFormat);
-        a.download = `${imageName}_${side}${extension}`;
-        
-        a.click();
-        URL.revokeObjectURL(url);
-    }, imageFormat);
+    // Loop through all uploaded images
+    currentImages.forEach((imgObj, index) => {
+        // Add a 300ms delay between each download to prevent browser blocking
+        setTimeout(() => {
+            const splitX = Math.round(imgObj.img.width * splitPercent);
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            if (side === 'left') {
+                canvas.width = splitX;
+                canvas.height = imgObj.img.height;
+                ctx.drawImage(
+                    imgObj.img,
+                    0, 0, splitX, imgObj.img.height,
+                    0, 0, splitX, imgObj.img.height
+                );
+            } else {
+                canvas.width = imgObj.img.width - splitX;
+                canvas.height = imgObj.img.height;
+                ctx.drawImage(
+                    imgObj.img,
+                    splitX, 0, imgObj.img.width - splitX, imgObj.img.height,
+                    0, 0, imgObj.img.width - splitX, imgObj.img.height
+                );
+            }
+            
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                const extension = getExtension(imgObj.format);
+                a.download = `${imgObj.name}_${side}${extension}`;
+                
+                a.click();
+                URL.revokeObjectURL(url);
+            }, imgObj.format);
+            
+        }, index * 300); // 300ms delay multiplied by the index
+    });
 }
 
 // 拡張子を取得
@@ -272,18 +289,15 @@ function getExtension(format) {
 
 // リセットボタン
 resetBtn.addEventListener('click', () => {
-    // 状態をリセット
     currentImage = null;
+    currentImages = []; // Clear the array
     originalImageData = null;
     fileInput.value = '';
     urlInput.value = '';
     splitPosition.value = 50;
     splitPercentage.textContent = '50';
     
-    // プレビューセクションを非表示
     previewSection.style.display = 'none';
-    
-    // スクロールを上に戻す
     window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
