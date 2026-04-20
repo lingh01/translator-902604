@@ -1,27 +1,103 @@
+---
+layout: default
+title: Home Page
+---
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Post Auto-Translator</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <style>
+        .error-msg { color: #d93526; background: #ffebee; padding: 1rem; border-radius: 8px; display: none; margin-bottom: 1rem; }
+        textarea { font-family: monospace; font-size: 0.9rem; }
+        .warning-msg { color: #856404; background: #fff3cd; padding: 1rem; border-radius: 8px; display: none; margin-bottom: 1rem; border: 1px solid #ffeeba; }
+        .grid-container { align-items: start; gap: 2rem; }
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 40px;
+            margin-bottom: 0.5rem;
+        }
+
+        .field-header label { margin-bottom: 0; }
+
+        #copyBtn, #editBtn { 
+            padding: 4px 12px; 
+            font-size: 0.8rem; 
+            width: auto; 
+            margin-bottom: 0;
+        }
+    </style>
+    <script src="names.js"></script>
+</head>
+
 <body>
     <main class="container">
-        <h1>Social Media CSV Auto-Translator</h1>
-        
-        <div style="border: 2px dashed #ccc; padding: 2rem; text-align: center; margin-bottom: 1rem;">
-            <label for="csvFileInput"><strong>Step 1: Upload CSV File</strong></label><br>
-            <input type="file" id="csvFileInput" accept=".csv">
+    <h1>Social Media Post Auto-Translator</h1>
+
+        <section style="background: #f4f4f4; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; border: 2px dashed #ccc;">
+            <h5 style="margin-top: 0;">CSV Batch Translation</h5>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <input type="file" id="csvFileInput" accept=".csv" style="margin-bottom: 0;">
+                <button id="processCsvBtn" class="contrast" style="width: auto; margin-bottom: 0;">Process & Download CSV</button>
+            </div>
+            <small>Only rows with a "テキスト" column matching our templates will be kept.</small>
+        </section>
+
+        <div class="grid">
+            <!-- Left Column: Input & Settings -->
+            <section>
+            <div class="field-header">
+                <label for="jpInput">Paste Japanese Source Text</label>
+            </div>
+            <textarea id="jpInput" rows="10" placeholder="Paste the Japanese post here..."></textarea>
+                
+                <div id="warningMessage" class="warning-msg"></div>
+                <div id="errorMessage" class="error-msg"></div>
+
+                <fieldset>
+                    <legend>Include Languages:</legend>
+                    <label><input type="checkbox" id="langEn" checked> English</label>
+                    <label><input type="checkbox" id="langZh" checked> Chinese</label>
+                    <label><input type="checkbox" id="langTh" checked> Thai</label>
+                </fieldset>
+
+                <button id="translateBtn" class="contrast">Detect & Generate Translation</button>
+            </section>
+
+            <!-- Right Column: Output -->
+            <section>
+                <div class="field-header">
+                    <label for="finalOutput">Final Output</label>
+                    <div class="button-group">
+                        <button id="editBtn" class="secondary outline">編集</button>
+                        <button id="copyBtn" class="secondary outline">コピー</button>
+                    </div>
+                </div>
+                <textarea id="finalOutput" readonly rows="20"></textarea>
+            </section>
         </div>
 
-        <fieldset>
-            <legend>Step 2: Choose Languages to Include in Output:</legend>
-            <label><input type="checkbox" id="langEn" checked> English</label>
-            <label><input type="checkbox" id="langZh" checked> Chinese</label>
-            <label><input type="checkbox" id="langTh" checked> Thai</label>
-        </fieldset>
-
-        <button id="processCsvBtn" class="contrast">Step 3: Process & Download Translated CSV</button>
-
-        <div id="statusMessage" style="margin-top: 1rem; font-weight: bold;"></div>
-        <div id="errorMessage" class="error-msg"></div>
-        <div id="warningMessage" class="warning-msg"></div>
-
         <script>
-            /* --- GLOSSARY & MAPS (Same as your original code) --- */
+
+            let copyResetTimeout;
+
+            function resetCopyButton() {
+                clearTimeout(copyResetTimeout);
+                const copyBtn = document.getElementById('copyBtn');
+                copyBtn.textContent = "コピー";
+                copyBtn.classList.add('outline');
+            }
+
             const glossary_jp_to_en = {
                 "バトスピエントリーデッキ": "Battle Spirits Entry Deck",
                 "赫焔ノ風牙": "/ Fangs of the Crimson",
@@ -34,86 +110,139 @@
                 "永皇の輝き": "/ Radiance of the Eternal Emperor",
                 "ブースターパック DUAL REVOLUTION": "BOOSTER PACK DUAL REVOLUTION",
                 "スタートデッキ DIGIMON BEATBREAK": "STARTER DECK DIGIMON BEATBREAK",
-                "幻惑の翔風": "/ Enchanted Skywind"
-            };
+                "幻惑の翔風": "/ Enchanted Skywind",
+                "ハヤケン・サレナ": "hayaken_sarena"
+            }
+
             const glossary_jp_to_zh = {
-                "ブースターパック DUAL REVOLUTION": "數碼寶貝卡牌遊戲補充包 雙重巨變",
-                "スタートデッキ DIGIMON BEATBREAK": "數碼寶貝卡牌遊戲起始牌組 節奏破碎"
-            };
+                "ブースターパック DUAL REVOLUTION": "補充包 雙重巨變",
+                "スタートデッキ DIGIMON BEATBREAK": "起始牌組 節奏破碎"
+            }
+
             const colorMap = {
                 "緑": { en: "Green", zh: "綠", th: "สีเขียว" },
                 "白": { en: "White", zh: "白", th: "สีขาว" },
                 "黄": { en: "Yellow", zh: "黃", th: "สีเหลือง" },
                 "赤": { en: "Red", zh: "紅", th: "สีแดง" },
-                "青": { en: "Blue", zh: "青", th: "สีน้ำเงิน" }
+                "青": { en: "Blue", zh: "青", th: "สีน้ำเงิน" },
+                "紫": { en: "Purple", zh: "紫", th: "สีม่วง" }
             };
+
 
             let missingTranslations = [];
 
-            /* --- HELPER FUNCTIONS --- */
             function getDigimonName(name) {
-                if (digimon_names[name]) return name + " / " + digimon_names[name];
-                missingTranslations.push(`デジモン: ${name} (英名未登録)`);
-                return name;
+                if (digimon_names[name]) {
+                    return name + " / " + digimon_names[name];
+                } else {
+                    missingTranslations.push(`デジモン: ${name} (英名未登録)`);
+                    return name;
+                }
             }
 
             function getOnePieceName(name) {
-                if (onepiece_names[name]) return name + " / " + onepiece_names[name];
-                missingTranslations.push(`ONE PIECE: ${name} (英名未登録)`);
-                return name;
+                if (onepiece_names[name]) {
+                    return name + " / " + onepiece_names[name];
+                } else {
+                    missingTranslations.push(`ONE PIECE: ${name} (英名未登録)`);
+                    return name;
+                }
             }
+
 
             function translateColor(jpColor, lang) {
                 return (colorMap[jpColor] && colorMap[jpColor][lang]) ? colorMap[jpColor][lang] : jpColor;
             }
 
+            /** 
+             * LINK TRANSFORMER
+             * Logic for converting JP links to localized links
+             **/
             function transformLink(url, lang, isEternal = false) {
                 if (!url) return "";
                 const domainRegex = /(www\.)?battlespirits\.com/;
-                let targetDomain = isEternal ? 
-                    (lang === 'zh' ? 'tw.battlespirits.com' : 'en.battlespirits.com') : 
-                    (lang === 'zh' ? 'asia-tw.battlespirits.com' : 'asia-en.battlespirits.com');
+                let targetDomain;
+                
+                if (isEternal) {
+                    targetDomain = (lang === 'zh') ? 'tw.battlespirits.com' : 'en.battlespirits.com';
+                } else {
+                    targetDomain = (lang === 'zh') ? 'asia-tw.battlespirits.com' : 'asia-en.battlespirits.com';
+                }
+                
                 return url.replace(domainRegex, targetDomain);
             }
 
             function localizeBSName(text, lang) {
-                if (!text || lang === 'zh') return text;
+                if (!text) return "";
+                if (lang === 'zh') return text;
+                
                 let localizedText = text;
-                let found = false;
+                let foundMatch = false;
+            
                 for (const [jp, en] of Object.entries(glossary_jp_to_en)) {
                     if (localizedText.includes(jp)) {
-                        found = true;
-                        localizedText = en.includes("/") ? localizedText.replace(jp, `${jp} ${en}`) : localizedText.replace(jp, en);
+                        foundMatch = true;
+                        if (String(en).includes("/")) {
+                            localizedText = localizedText.replace(jp, `${jp} ${en}`);
+                        } else {
+                            localizedText = localizedText.replace(jp, en);
+                        }
                     }
                 }
-                if (!found) missingTranslations.push(`BSタイトル: ${text} (英名未登録)`);
+            
+                // Warning for missing Battle Spirits title in English/Thai
+                if (lang !== 'zh' && !foundMatch) {
+                    const warningMsg = `BSタイトル: ${text} (英名未登録)`;
+                    if (!missingTranslations.includes(warningMsg)) {
+                        missingTranslations.push(warningMsg);
+                    }
+                }
+            
                 return localizedText;
             }
 
             function localizeDigimonPackName(text, lang) {
                 if (!text) return "";
                 let localizedText = text;
-                let found = false;
+                let foundMatch = false;
+            
                 if (lang === 'zh') {
                     for (const [jp, zh] of Object.entries(glossary_jp_to_zh)) {
-                        if (localizedText.includes(jp)) localizedText = localizedText.replace(jp, zh);
+                        if (localizedText.includes(jp)) {
+                            localizedText = localizedText.replace(jp, zh);
+                        }
                     }
-                } else {
+                    // Simplified check: if it's still the same after glossary check, it's "not found"
+                    // (Optional: you can add a warning for Chinese here too if needed)
+                } else if (lang === 'en' || lang === 'th') {
                     for (const [jp, en] of Object.entries(glossary_jp_to_en)) {
                         if (localizedText.includes(jp)) {
-                            found = true;
+                            foundMatch = true;
                             localizedText = localizedText.replace(jp, en);
                         }
                     }
-                    if (!found) missingTranslations.push(`デジモンパック名: ${text} (英名未登録)`);
+            
+                    // Warning for missing Digimon Pack title in English/Thai
+                    if (!foundMatch) {
+                        const warningMsg = `デジモンパック名: ${text} (英名未登録)`;
+                        if (!missingTranslations.includes(warningMsg)) {
+                            missingTranslations.push(warningMsg);
+                        }
+                    }
                 }
+            
                 return localizedText;
             }
 
-            /* --- TEMPLATES --- */
+            /** 
+             * TEMPLATES
+             * pattern: Regex to match normalized (single-spaced) text.
+             * vars: mapping match groups to specific logic (like link transformation).
+             **/
             const translationTemplates = [
                 {
                     name: "Card Reveal",
+                    // $1: Code, $2: Card Name, $3: Pack Name, $4: Date, $5: Suffix, $6: URL
                     pattern: /【(.*?)カード紹介】\s*新規カード「(.*?)」を公開！\s*『(.*?)』は(.*?)(?:\(.\))?(発売予定|発売中|発売)！\s*🔽商品ページ\s*(https?:\/\/\S+)/,
                     prefix: (m) => `【${m[1]} Card Reveal / 卡牌介紹 / แนะนำการ์ด】\n\n`,
                     outputs: {
@@ -125,6 +254,8 @@
                 },
                 {
                     name: "Product Reveal",
+                    // Matches: 【ID 商品紹介】... スタンダード第[二2]弾『Pack』で登場する...イラストを公開！
+                    // $1: ID, $2: PackName, $3: Color, $4: CardName, $5: PackName(repeat), $6: Date
                     pattern: /【(.*?)商品紹介】.*?スタンダード第[二2]弾『(.*?)』で登場する(.*?)のXレア「(.*?)」のイラストを公開！.*?『ブースターパック (.*?)』は(.*?)(?:\(.\))?(発売|発売中)！/,
                     prefix: (m) => `【${m[1]} Product Reveal / 商品公開 / ข้อมูลสินค้า】\n\n`,
                     outputs: {
@@ -135,41 +266,103 @@
                     hashtags: "#BattleSpirits"
                 },
                 {
+                    name: "Battlespirit Glitter Card",
+                    // $1: ID, $2: Date, $3: Full Pack Name, $4: Pack Name (repeat), $5: Date (repeat), $6: Status, $7: URL
+                    pattern: /【(.*?) SECRET公開】\s*(.*?)(?:\(.\))?発売『(.*?)』のSECRET版カードを公開！.*?『ブースターパック (.*?)』は(.*?)(?:\(.\))?(発売|発売中)！\s*🔽商品ページ\s*(https?:\/\/\S+)/,
+                    prefix: (m) => `【${m[1]} SECRET Reveal / SECRET公開 / เผยการ์ด SECRET】\n\n`,
+                    outputs: {
+                        en: (m) => `Revealing the SECRET version cards from [${localizeBSName(m[3], 'en')}] releasing on ${m[2]}!\nStarting from this release, SECRET versions will feature a special foil processing.\n\n[${localizeBSName(m[3], 'en')}] will be available starting ${m[2]}!\n\n🔽Product Page:\n${transformLink(m[7], 'en', m[3].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        zh: (m) => `公開${m[2]}發售的《${m[3]}》SECRET版卡牌！\n從本次開始，SECRET版將採用特別的閃卡加工。\n\n《${m[3]}》將於 ${m[2]} 發售！\n\n🔽商品頁面：\n${transformLink(m[7], 'zh', m[3].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        th: (m) => `เผยการ์ดเวอร์ชัน SECRET ของ “${localizeBSName(m[3], 'th')}” ที่จะวางจำหน่ายในวันที่ ${m[2]}!\nตั้งแต่ชุดนี้เป็นต้นไป การ์ดเวอร์ชัน SECRET จะใช้เทคนิคเคลือบฟอยล์แบบพิเศษ \n“${localizeBSName(m[3], 'th')}” มีกำหนดวางจำหน่าย ${m[2]} นี้!\n\n🔽หน้าสินค้า:\n${transformLink(m[7], 'th', m[3].includes("エターナル"))}`
+                    },
+                    hashtags: "#BattleSpirits"
+                },
+                {
+                    name: "Battlespirit Over Secret Reveal",
+                    // $1: Code, $2: Date, $3: Pack Name, $4: Card Name, $5: Artist, $6: URL
+                    pattern: /【(.*?) SECRET公開】\s*(.*?)(?:\(.\))?発売の『(.*?)』でごくまれに手に入る特別なSECRETカード「OVER SECRET」を公開！\s*「(.*?)」が(.*?)さん描き下ろしのイラスト違い版で登場。.*?🔽商品ページ\s*(https?:\/\/\S+)/,
+                    prefix: (m) => `【${m[1]} SECRET Reveal / SECRET公開 / เผยการ์ด SECRET】\n\n`,
+                    outputs: {
+                        en: (m) => `Revealing the special SECRET card "OVER SECRET", which can be obtained very rarely in [${localizeBSName(m[3], 'en')}] releasing on ${m[2]}!\n"${m[4]}" appears in an alternate illustration version newly drawn by ${localizeBSName(m[5], 'en')}.\nIt features a luxurious design using gold foil!\n\n🔽Details:\n${transformLink(m[6], 'en', m[3].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        zh: (m) => `公開 ${m[2]} 發售的《${localizeBSName(m[3], 'zh')}》中極罕見能獲得的特別SECRET卡牌「OVER SECRET」！\n「${m[4]}」以 ${localizeBSName(m[5], 'zh')} 全新繪製的異面插圖版本登場。\n是使用了金箔的豪華設計！\n\n🔽詳細：\n${transformLink(m[6], 'zh', m[3].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        th: (m) => `เผยการ์ด SECRET สุดพิเศษ "OVER SECRET" ที่สามารถพบได้ยากมากใน "${localizeBSName(m[3], 'th')}" ที่จะวางจำหน่ายในวันที่ ${m[2]}!\n「${m[4]}」 ปรากฏตัวในเวอร์ชันภาพอิลลัสต์แบบอื่นที่วาดขึ้นใหม่โดย ${localizeBSName(m[5], 'th')}\nมาพร้อมกับดีไซน์สุดหรูหราที่ใช้ฟอยล์สีทอง!\n\n🔽รายละเอียด:\n${transformLink(m[6], 'th', m[3].includes("エターナル"))}`
+                    },
+                    hashtags: "#BattleSpirits"
+                },
+                {
                     name: "Gundam Card Reveal",
                     pattern: /【収録カード紹介】 「(.*?)」を紹介！ ブースターパック『(.*?)』は(.*?)(?:\(.\))?\s*発売.*?▽商品ページはこちら (https?:\/\/\S+)/,
                     prefix: (m) => {
-                        missingTranslations.push(`ガンダム: ${m[1]} (要確認)`);
+                        missingTranslations.push(`ガンダム: ${m[1]} (英語名はインターネットで確認してください)`);
                         return `【Card Reveal / 卡牌介紹 / แนะนำการ์ด】\n\n`;
                     },
                     outputs: {
-                        en: (m) => `Introducing "${m[1]}"!\nBooster Pack [${m[2]}] releases on ${m[3]}!\n▽Product Info\n${m[4].replace('/jp/', '/asia-en/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
-                        zh: (m) => `介紹「${m[1]}」!\n補充包『${m[2]}』將於 ${m[3]} 發售！\n▽商品資訊\n${m[4].replace('/jp/', '/zh-tw/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
-                        th: (m) => `แนะนำการ์ด "${m[1]}"!\nBooster Pack "${m[2]}" วางจำหน่ายวันที่ ${m[3]}!\n▽ข้อมูลสินค้า\n${m[4].replace('/jp/', '/th/')}`
+                        en: (m) => `Introducing "${m[1]}"!\nBooster Pack [${m[2]}] releases on ${m[3]}!\n\n▽Product Info\n${m[4].replace('/jp/', '/asia-en/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        zh: (m) => `介紹「${m[1]}」!\n補充包『${m[2]}』將於 ${m[3]} 發售！\n\n▽商品資訊\n${m[4].replace('/jp/', '/zh-tw/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        th: (m) => `แนะนำการ์ด "${m[1]}"!\nBooster Pack "${m[2]}" วางจำหน่ายวันที่ ${m[3]}!\n\n▽ข้อมูลสินค้า\n${m[4].replace('/jp/', '/th/')}`
                     },
                     hashtags: "#GundamCardGame\n#GCG\n#高達卡牌"
                 },
                 {
+                    name: "Gundam Parallel Card Reveal",
+                    pattern: /【収録カード紹介】 パラレルカード「(.*?)」を紹介！ ブースターパック『(.*?)』は(.*?)(?:\(.\))?\s*発売.*?▽商品ページはこちら (https?:\/\/\S+)/,
+                    prefix: (m) => {
+                        missingTranslations.push(`ガンダム: ${m[1]} (英語名はインターネットで確認してください)`);
+                        return `【Card Reveal / 卡牌介紹 / แนะนำการ์ด】\n\n`;
+                    },
+                    outputs: {
+                        en: (m) => `Introducing Parallel Card "${m[1]}"!\nBooster Pack [${m[2]}] releases on ${m[3]}!\n▽Product Info\n${m[4].replace('/jp/', '/asia-en/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        zh: (m) => `介紹平行卡「${m[1]}」!\n補充包『${m[2]}』將於 ${m[3]} 發售！\n▽商品資訊\n${m[4].replace('/jp/', '/zh-tw/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        th: (m) => `แนะนำ Parallel Card "${m[1]}"!\nBooster Pack "${m[2]}" วางจำหน่ายวันที่ ${m[3]}!\n▽ข้อมูลสินค้า\n${m[4].replace('/jp/', '/th/')}`
+                    },
+                    hashtags: "#GundamCardGame\n#GCG\n#高達卡牌"
+                },
+                {
+                    name: "Battlespirit Soul Magic Secret Reveal",
+                    // $1: Code, $2: Spirit Name, $3: Magic Card Name, $4: Pack Name, $5: Date, $6: Status, $7: URL
+                    pattern: /【(.*?) SECRET公開】\s*ソウルマジックが歴代人気スピリットのイラストで登場！\s*「(.*?)」の新規描き下ろしイラストを使用した「(.*?)」のSECRET版を公開。\s*『(.*?)』は(.*?)(?:\(.\))?(発売予定|発売|発売中)！\s*🔽(?:商品ページ|詳細)\s*(https?:\/\/\S+)/,
+                    prefix: (m) => `【${m[1]} SECRET Reveal / SECRET公開 / เผยการ์ด SECRET】\n\n`,
+                    outputs: {
+                        en: (m) => {
+                            const packEn = localizeBSName(m[4], 'en').replace("バトルスピリッツ", "Battle Spirits");
+                            return `Soul Magic cards featuring illustrations of popular past Spirits arrive!\nRevealing the SECRET version of "${m[3]}" featuring a newly drawn illustration of "${m[2]}".\n[${packEn}] is scheduled to release on ${m[5]}!\n\n🔽Product Page:\n${transformLink(m[7], 'en', m[4].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        zh: (m) => {
+                            const packZh = m[4].replace("バトルスピリッツ", "Battle Spirits");
+                            return `全幅插圖SECRET靈魂魔法卡採用歷代人氣Spirit的插圖登場！\n公開使用「${m[2]}」全新繪製插畫的「${m[3]}」SECRET版。\n《${packZh}》將於 ${m[5]} 發售！\n\n🔽商品頁面：\n${transformLink(m[7], 'zh', m[4].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        th: (m) => {
+                            const packTh = localizeBSName(m[4], 'th').replace("バトルスピリッツ", "Battle Spirits");
+                            return `การ์ด Soul Magic มาพร้อมกับภาพอิลลัสต์ของ Spirit ยอดฮิตในอดีต!\nเผยการ์ดเวอร์ชัน SECRET ของ "${m[3]}" ที่มาพร้อมกับภาพวาดใหม่ของ "${m[2]}"\n“${packTh}” มีกำหนดวางจำหน่าย ${m[5]} นี้!\n\n🔽หน้าสินค้า:\n${transformLink(m[7], 'th', m[4].includes("エターナル"))}`;
+                        }
+                    },
+                    hashtags: "#BattleSpirits"
+                },
+                {
                     name: "One Piece Booster Reveal",
+                    // Matches normalized text: 
+                    // $1: Code (OP-16), $2: Date (5/30), $3: Pack Name, $4: Card Name, $5: URL
                     pattern: /★(.*?)カード紹介★ (.*?)発売のブースターパック『(.*?)』に収録するカードをご紹介！ 今回は.*?「(.*?)」です。 ▼商品情報はコチラ (https?:\/\/\S+)/,
                     prefix: (m) => `★${m[1]} Card Reveal / ${m[1]}卡公開 / ${m[1]} แนะนำการ์ดในเซ็ต★\n\n`,
                     outputs: {
                         en: (m) => {
                             const opUrl = m[5].replace('onepiece', 'asia-en.onepiece').replace('.html', '.php');
-                            return `Introducing the Character Card "${getOnePieceName(m[4])}"! This card will be included in Booster Pack: ${m[3]} releasing on ${m[2]}!\n▼Product Info\n${opUrl}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                            return `Introducing the Character Card "${getOnePieceName(m[4])}"! This card will be included in Booster Pack: ${m[3]} releasing on ${m[2]}!\n\n▼Product Info\n${opUrl}\n\n━━━━━━━━━━━━━━━━━━━━`;
                         },
                         zh: (m) => {
                             const opUrl = m[5].replace('onepiece', 'asia-tc.onepiece').replace('.html', '.php');
-                            return `我將向您介紹將於${m[2]} 發售の補充包：${m[3]} 收錄卡片！這次是角色卡「${getOnePieceName(m[4])}」。\n▼商品資訊\n${opUrl}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                            return `我將向您介紹將於${m[2]} 發售的補充包：${m[3]} 收錄卡片！這次是角色卡「${getOnePieceName(m[4])}」。\n\n▼商品資訊\n${opUrl}\n\n━━━━━━━━━━━━━━━━━━━━`;
                         },
                         th: (m) => {
                             const opUrl = m[5].replace('onepiece', 'asia-th.onepiece').replace('.html', '.php');
-                            return `แนะนำการ์ดจาก Booster Pack ${m[3]} วางจำหน่าย ${m[2]} นี้! ครั้งนี้เป็นการ์ดตัวละคร "${getOnePieceName(m[4])}"!\n▼ข้อมูลสินค้า คลิกที่นี่\n${opUrl}`;
+                            return `แนะนำการ์ดจาก Booster Pack ${m[3]} วางจำหน่าย ${m[2]} นี้! ครั้งนี้เป็นการ์ดตัวละคร "${getOnePieceName(m[4])}"!\n\n▼ข้อมูลสินค้า คลิกที่นี่\n${opUrl}`;
                         }
                     },
                     hashtags: "#ONEPIECE\n#ONEPIECECardgame\n#航海王卡牌"
                 },
                 {
                     name: "Digimon Double Card Reveal",
+                    // $1: Full Title, $2: Type (card/parallel), $3: Monster 1, $4: Monster 2, $5: URL
                     pattern: /★カード紹介★ 『(.*?)』の(カード|パラレルカード)をご紹介。 本日のカードは「(.*?)」「(.*?)」です！ 🔽詳細 (https?:\/\/\S+)/,
                     prefix: (m) => `★Card Reveal / 卡牌介紹 / แนะนำการ์ด★\n\n`,
                     outputs: {
@@ -183,13 +376,14 @@
                         },
                         th: (m) => {
                             const type = m[2] === "パラレルカード" ? "Parallel Cards" : "การ์ด";
-                            return `แนะนำ${type}จาก ${localizeDigimonPackName(m[1], 'th')}!\nวันนี้เราขอแนะนำการ์ด “${getDigimonName(m[3])}” および “${getDigimonName(m[4])}”!\n🔽รายละเอียด\n${m[5].replace('://', '://en.')}`;
+                            return `แนะนำ${type}จาก ${localizeDigimonPackName(m[1], 'th')}!\nวันนี้เราขอแนะนำการ์ด “${getDigimonName(m[3])}” และ “${getDigimonName(m[4])}”!\n🔽รายละเอียด\n${m[5].replace('://', '://en.')}`;
                         }
                     },
                     hashtags: "#DigimonCardGame\n#DigimonTCG\n#Digimon\n#數碼寶貝卡牌遊戲"
                 },
                 {
                     name: "Digimon Single Card Reveal",
+                    // $1: Full Title, $2: Type (card/parallel), $3: Monster 1, $4: URL
                     pattern: /★カード紹介★ 『(.*?)』の(カード|パラレルカード)をご紹介。 本日のカードは「(.*?)」です！ 🔽詳細 (https?:\/\/\S+)/,
                     prefix: (m) => `★Card Reveal / 卡牌介紹 / แนะนำการ์ด★\n\n`,
                     outputs: {
@@ -199,7 +393,7 @@
                         },
                         zh: (m) => {
                             const type = m[2] === "パラレルカード" ? "平行卡" : "卡片";
-                            return `為您介紹『${localizeDigimonPackName(m[1], 'zh')}』の${type}。\n今天的卡片是「${getDigimonName(m[3])}」！\n🔽詳細\n${m[4].replace('://', '://hk.')}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                            return `為您介紹『${localizeDigimonPackName(m[1], 'zh')}』的${type}。\n今天的卡片是「${getDigimonName(m[3])}」！\n🔽詳細\n${m[4].replace('://', '://hk.')}\n\n━━━━━━━━━━━━━━━━━━━━`;
                         },
                         th: (m) => {
                             const type = m[2] === "パラレルカード" ? "Parallel Card" : "การ์ด";
@@ -209,92 +403,183 @@
                     hashtags: "#DigimonCardGame\n#DigimonTCG\n#Digimon\n#數碼寶貝卡牌遊戲"
                 }
             ];
+            const jpInput = document.getElementById('jpInput');
+            const finalOutput = document.getElementById('finalOutput');
+            const translateBtn = document.getElementById('translateBtn');
+            const errorDiv = document.getElementById('errorMessage');
+            const warningDiv = document.getElementById('warningMessage');
 
-            /* --- CSV PROCESSING LOGIC --- */
-            document.getElementById('processCsvBtn').addEventListener('click', () => {
-                const fileInput = document.getElementById('csvFileInput');
-                const status = document.getElementById('statusMessage');
+            translateBtn.addEventListener('click', () => {
+                resetCopyButton();
+                const rawText = jpInput.value.trim();
+                const normalizedText = rawText.replace(/\s+/g, ' ');
                 
-                if (!fileInput.files.length) {
-                    alert("Please upload a CSV file first.");
-                    return;
+                errorDiv.style.display = 'none';
+                warningDiv.style.display = 'none';
+                missingTranslations = []; // Reset warnings
+                finalOutput.value = '';
+
+                if (!rawText) return;
+
+                let matched = false;
+                for (const tmpl of translationTemplates) {
+                    const match = normalizedText.match(tmpl.pattern);
+                    if (match) {
+                        renderOutput(tmpl, match);
+                        matched = true;
+                        break;
+                    }
                 }
 
-                const file = fileInput.files[0];
-                const reader = new FileReader();
-
-                reader.onload = (e) => {
-                    const content = e.target.result;
-                    processCsvContent(content);
-                };
-                reader.readAsText(file);
+                if (!matched) {
+                    errorDiv.textContent = "エラー：テキスト形式が認識されませんでした。対応するテンプレートが見つかりません。";
+                    errorDiv.style.display = 'block';
+                } else if (missingTranslations.length > 0) {
+                    // show jp message
+                    warningDiv.innerHTML = "<strong>【確認事項】</strong> 辞書に未登録、または手動確認が必要な項目があります：<br><ul>" + 
+                        missingTranslations.map(item => `<li>${item}</li>`).join('') + "</ul>";
+                    warningDiv.style.display = 'block';
+                }
             });
-
-            function processCsvContent(csvText) {
-                // Handle UTF-8 BOM if present
-                if (csvText.startsWith('\ufeff')) csvText = csvText.slice(1);
-                
-                const lines = parseCSV(csvText);
-                if (lines.length < 2) return;
-
-                const headers = lines[0];
-                const textColIdx = headers.indexOf('テキスト');
-                
-                if (textColIdx === -1) {
-                    alert("Error: Column 'テキスト' not found in CSV.");
-                    return;
-                }
-
-                const newHeaders = [...headers, "Translated Text", "Translation Warnings"];
-                const resultRows = [newHeaders];
-
+            finalOutput.addEventListener('input', () => {
+                resetCopyButton();
+            });
+            function renderOutput(template, matchGroups) {
+                const results = [];
                 const useEn = document.getElementById('langEn').checked;
                 const useZh = document.getElementById('langZh').checked;
                 const useTh = document.getElementById('langTh').checked;
 
-                for (let i = 1; i < lines.length; i++) {
-                    const row = lines[i];
-                    if (row.length < headers.length) continue;
+                if (useEn) results.push(template.outputs.en(matchGroups));
+                if (useZh) results.push(template.outputs.zh(matchGroups));
+                if (useTh) results.push(template.outputs.th(matchGroups));
 
-                    const rawText = row[textColIdx];
-                    const normalizedText = rawText.replace(/\s+/g, ' ');
+                const prefixStr = template.prefix ? template.prefix(matchGroups) : "";
+                const hashtagStr = template.hashtags ? '\n\n\n' + template.hashtags : "";
 
-                    let matchedTemplate = null;
-                    let matchResult = null;
-                    
-                    // Reset global warnings per row
-                    missingTranslations = [];
-
-                    for (const tmpl of translationTemplates) {
-                        const m = normalizedText.match(tmpl.pattern);
-                        if (m) {
-                            matchedTemplate = tmpl;
-                            matchResult = m;
-                            break;
-                        }
-                    }
-
-                    // Only keep row if it was translated
-                    if (matchedTemplate) {
-                        const finalTranslations = [];
-                        if (useEn) finalTranslations.push(matchedTemplate.outputs.en(matchResult));
-                        if (useZh) finalTranslations.push(matchedTemplate.outputs.zh(matchResult));
-                        if (useTh) finalTranslations.push(matchedTemplate.outputs.th(matchResult));
-
-                        const prefix = matchedTemplate.prefix ? matchedTemplate.prefix(matchResult) : "";
-                        const hashtags = matchedTemplate.hashtags ? '\n\n\n' + matchedTemplate.hashtags : "";
-                        
-                        const fullTranslation = prefix + finalTranslations.join('\n\n') + hashtags;
-                        const warnings = missingTranslations.length > 0 ? missingTranslations.join('; ') : "None";
-
-                        resultRows.push([...row, fullTranslation, warnings]);
-                    }
-                }
-
-                downloadCSV(resultRows);
+                finalOutput.value = prefixStr + results.join('\n\n') + hashtagStr;
             }
 
-            // Simple CSV parser to handle quotes and commas properly
+            // Add this to your <script> block
+            const editBtn = document.getElementById('editBtn');
+
+            editBtn.addEventListener('click', () => {
+                const isReadOnly = finalOutput.readOnly;
+                
+                if (isReadOnly) {
+                    // Switch to Edit Mode
+                    finalOutput.readOnly = false;
+                    finalOutput.focus();
+                    editBtn.textContent = "完了";
+                    editBtn.style.backgroundColor = "var(--pico-ins-color)"; // Optional: green tint
+                    editBtn.style.color = "#fff"; // Optional: white text for contrast
+                } else {
+                    // Switch back to Read Only
+                    finalOutput.readOnly = true;
+                    editBtn.textContent = "編集";
+                    editBtn.style.backgroundColor = ""; // Reset color
+                    editBtn.style.color = ""; // Reset color
+                }
+            });
+
+            // Copy Button Functionality
+            const copyBtn = document.getElementById('copyBtn');
+            copyBtn.addEventListener('click', () => {
+                const output = document.getElementById('finalOutput');
+                if (!output.value) return;
+
+                navigator.clipboard.writeText(output.value).then(() => {
+                    clearTimeout(copyResetTimeout);
+                    copyBtn.textContent = "コピー完了!";
+                    copyBtn.classList.remove('outline');
+                    
+                    // Return to normal after 2 seconds
+                    copyResetTimeout = setTimeout(resetCopyButton, 2000);
+                });
+            });
+
+            /* --- CSV PROCESSING MECHANIC --- */
+            document.getElementById('processCsvBtn').addEventListener('click', () => {
+                const fileInput = document.getElementById('csvFileInput');
+                if (!fileInput.files.length) {
+                    alert("Please upload a CSV file first.");
+                    return;
+                }
+            
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+            
+                reader.onload = (e) => {
+                    let csvText = e.target.result;
+                    // Handle UTF-8 BOM if present
+                    if (csvText.startsWith('\ufeff')) csvText = csvText.slice(1);
+                    
+                    const lines = parseCSV(csvText);
+                    if (lines.length < 2) {
+                        alert("CSV is empty or invalid.");
+                        return;
+                    }
+            
+                    const headers = lines[0];
+                    const textColIdx = headers.indexOf('テキスト');
+                    
+                    if (textColIdx === -1) {
+                        alert("Error: Column 'テキスト' not found in CSV.");
+                        return;
+                    }
+            
+                    const newHeaders = [...headers, "Translated Text", "Translation Warnings"];
+                    const resultRows = [newHeaders];
+            
+                    const useEn = document.getElementById('langEn').checked;
+                    const useZh = document.getElementById('langZh').checked;
+                    const useTh = document.getElementById('langTh').checked;
+            
+                    for (let i = 1; i < lines.length; i++) {
+                        const row = lines[i];
+                        if (!row[textColIdx]) continue;
+            
+                        const rawText = row[textColIdx].trim();
+                        const normalizedText = rawText.replace(/\s+/g, ' ');
+            
+                        let matchedTemplate = null;
+                        let matchResult = null;
+                        
+                        // Reset warnings for this specific row
+                        missingTranslations = [];
+            
+                        for (const tmpl of translationTemplates) {
+                            const m = normalizedText.match(tmpl.pattern);
+                            if (m) {
+                                matchedTemplate = tmpl;
+                                matchResult = m;
+                                break;
+                            }
+                        }
+            
+                        // Only keep the row if a template matched (Delete others)
+                        if (matchedTemplate) {
+                            const finalTranslations = [];
+                            if (useEn) finalTranslations.push(matchedTemplate.outputs.en(matchResult));
+                            if (useZh) finalTranslations.push(matchedTemplate.outputs.zh(matchResult));
+                            if (useTh) finalTranslations.push(matchedTemplate.outputs.th(matchResult));
+            
+                            const prefix = matchedTemplate.prefix ? matchedTemplate.prefix(matchResult) : "";
+                            const hashtags = matchedTemplate.hashtags ? '\n\n\n' + matchedTemplate.hashtags : "";
+                            
+                            const fullTranslation = prefix + finalTranslations.join('\n\n') + hashtags;
+                            const warnings = missingTranslations.length > 0 ? missingTranslations.join('; ') : "None";
+            
+                            resultRows.push([...row, fullTranslation, warnings]);
+                        }
+                    }
+            
+                    downloadCSV(resultRows);
+                };
+                reader.readAsText(file);
+            });
+
+            // CSV Parser to handle quotes, commas, and newlines correctly
             function parseCSV(text) {
                 const rows = [];
                 let row = [];
@@ -321,19 +606,23 @@
                 if (row.length || field) { row.push(field); rows.push(row); }
                 return rows;
             }
-
+            
+            // Function to generate and trigger the CSV download
             function downloadCSV(rows) {
+                // \ufeff ensures Excel opens the file with UTF-8 encoding (prevents Japanese gibberish)
                 const csvContent = "\ufeff" + rows.map(r => r.map(cell => `"${(cell || "").toString().replace(/"/g, '""')}"`).join(",")).join("\n");
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement("a");
                 const url = URL.createObjectURL(blob);
                 link.setAttribute("href", url);
-                link.setAttribute("download", "translated_posts.csv");
-                link.style.visibility = 'hidden';
+                link.setAttribute("download", "translated_social_posts.csv");
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
             }
+
         </script>
     </main>
 </body>
+
+</html>
