@@ -1,0 +1,339 @@
+<body>
+    <main class="container">
+        <h1>Social Media CSV Auto-Translator</h1>
+        
+        <div style="border: 2px dashed #ccc; padding: 2rem; text-align: center; margin-bottom: 1rem;">
+            <label for="csvFileInput"><strong>Step 1: Upload CSV File</strong></label><br>
+            <input type="file" id="csvFileInput" accept=".csv">
+        </div>
+
+        <fieldset>
+            <legend>Step 2: Choose Languages to Include in Output:</legend>
+            <label><input type="checkbox" id="langEn" checked> English</label>
+            <label><input type="checkbox" id="langZh" checked> Chinese</label>
+            <label><input type="checkbox" id="langTh" checked> Thai</label>
+        </fieldset>
+
+        <button id="processCsvBtn" class="contrast">Step 3: Process & Download Translated CSV</button>
+
+        <div id="statusMessage" style="margin-top: 1rem; font-weight: bold;"></div>
+        <div id="errorMessage" class="error-msg"></div>
+        <div id="warningMessage" class="warning-msg"></div>
+
+        <script>
+            /* --- GLOSSARY & MAPS (Same as your original code) --- */
+            const glossary_jp_to_en = {
+                "バトスピエントリーデッキ": "Battle Spirits Entry Deck",
+                "赫焔ノ風牙": "/ Fangs of the Crimson",
+                "紫幻ノ血醒": "/ Specter of the Violet",
+                "翆海ノ甲魚": "/ Predator of the Wild",
+                "白命ノ鉱人": "/ Colossus of the White",
+                "煌陽ノ雷竜": "/ Dragon of the Thunderbolt",
+                "創世の鼓動": "/ The Pulse of Genesis",
+                "蒼淵ノ凶獣": "/ Savage of the Azure Abyss",
+                "永皇の輝き": "/ Radiance of the Eternal Emperor",
+                "ブースターパック DUAL REVOLUTION": "BOOSTER PACK DUAL REVOLUTION",
+                "スタートデッキ DIGIMON BEATBREAK": "STARTER DECK DIGIMON BEATBREAK",
+                "幻惑の翔風": "/ Enchanted Skywind"
+            };
+            const glossary_jp_to_zh = {
+                "ブースターパック DUAL REVOLUTION": "數碼寶貝卡牌遊戲補充包 雙重巨變",
+                "スタートデッキ DIGIMON BEATBREAK": "數碼寶貝卡牌遊戲起始牌組 節奏破碎"
+            };
+            const colorMap = {
+                "緑": { en: "Green", zh: "綠", th: "สีเขียว" },
+                "白": { en: "White", zh: "白", th: "สีขาว" },
+                "黄": { en: "Yellow", zh: "黃", th: "สีเหลือง" },
+                "赤": { en: "Red", zh: "紅", th: "สีแดง" },
+                "青": { en: "Blue", zh: "青", th: "สีน้ำเงิน" }
+            };
+
+            let missingTranslations = [];
+
+            /* --- HELPER FUNCTIONS --- */
+            function getDigimonName(name) {
+                if (digimon_names[name]) return name + " / " + digimon_names[name];
+                missingTranslations.push(`デジモン: ${name} (英名未登録)`);
+                return name;
+            }
+
+            function getOnePieceName(name) {
+                if (onepiece_names[name]) return name + " / " + onepiece_names[name];
+                missingTranslations.push(`ONE PIECE: ${name} (英名未登録)`);
+                return name;
+            }
+
+            function translateColor(jpColor, lang) {
+                return (colorMap[jpColor] && colorMap[jpColor][lang]) ? colorMap[jpColor][lang] : jpColor;
+            }
+
+            function transformLink(url, lang, isEternal = false) {
+                if (!url) return "";
+                const domainRegex = /(www\.)?battlespirits\.com/;
+                let targetDomain = isEternal ? 
+                    (lang === 'zh' ? 'tw.battlespirits.com' : 'en.battlespirits.com') : 
+                    (lang === 'zh' ? 'asia-tw.battlespirits.com' : 'asia-en.battlespirits.com');
+                return url.replace(domainRegex, targetDomain);
+            }
+
+            function localizeBSName(text, lang) {
+                if (!text || lang === 'zh') return text;
+                let localizedText = text;
+                let found = false;
+                for (const [jp, en] of Object.entries(glossary_jp_to_en)) {
+                    if (localizedText.includes(jp)) {
+                        found = true;
+                        localizedText = en.includes("/") ? localizedText.replace(jp, `${jp} ${en}`) : localizedText.replace(jp, en);
+                    }
+                }
+                if (!found) missingTranslations.push(`BSタイトル: ${text} (英名未登録)`);
+                return localizedText;
+            }
+
+            function localizeDigimonPackName(text, lang) {
+                if (!text) return "";
+                let localizedText = text;
+                let found = false;
+                if (lang === 'zh') {
+                    for (const [jp, zh] of Object.entries(glossary_jp_to_zh)) {
+                        if (localizedText.includes(jp)) localizedText = localizedText.replace(jp, zh);
+                    }
+                } else {
+                    for (const [jp, en] of Object.entries(glossary_jp_to_en)) {
+                        if (localizedText.includes(jp)) {
+                            found = true;
+                            localizedText = localizedText.replace(jp, en);
+                        }
+                    }
+                    if (!found) missingTranslations.push(`デジモンパック名: ${text} (英名未登録)`);
+                }
+                return localizedText;
+            }
+
+            /* --- TEMPLATES --- */
+            const translationTemplates = [
+                {
+                    name: "Card Reveal",
+                    pattern: /【(.*?)カード紹介】\s*新規カード「(.*?)」を公開！\s*『(.*?)』は(.*?)(?:\(.\))?(発売予定|発売中|発売)！\s*🔽商品ページ\s*(https?:\/\/\S+)/,
+                    prefix: (m) => `【${m[1]} Card Reveal / 卡牌介紹 / แนะนำการ์ด】\n\n`,
+                    outputs: {
+                        en: (m) => `Revealing the new card "${m[2]}"!\n[${localizeBSName(m[3], 'en').replace("バトルスピリッツ", "Battle Spirits").replace("エターナル", "Eternal").replace("ブースター", " Booster:")}] will be available starting ${m[4]}!\n🔽Details:\n${transformLink(m[6], 'en', m[3].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        zh: (m) => `公開「${m[2]}」卡牌！\n《${m[3].replace("バトルスピリッツ", "Battle Spirits").replace("バトスピエントリーデッキ", "Battle Spirits入門牌組").replace("エターナル", "Eternal").replace("ブースター", "補充包")}》將於 ${m[4]} 發售！\n🔽詳細：\n${transformLink(m[6], 'zh', m[3].includes("エターナル"))}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        th: (m) => `มาแล้ว! การ์ดใหม่ “${m[2]}”!\n“${localizeBSName(m[3], 'th').replace("バトルスピリッツ", "Battle Spirits").replace("エターナル", "Eternal").replace("ブースター", " Booster:")}” มีกำหนดวางจำหน่าย ${m[4]} นี้!\n🔽รายละเอียด\n${transformLink(m[6], 'th', m[3].includes("エターナル"))}`
+                    },
+                    hashtags: "#BattleSpirits"
+                },
+                {
+                    name: "Product Reveal",
+                    pattern: /【(.*?)商品紹介】.*?スタンダード第[二2]弾『(.*?)』で登場する(.*?)のXレア「(.*?)」のイラストを公開！.*?『ブースターパック (.*?)』は(.*?)(?:\(.\))?(発売|発売中)！/,
+                    prefix: (m) => `【${m[1]} Product Reveal / 商品公開 / ข้อมูลสินค้า】\n\n`,
+                    outputs: {
+                        en: (m) => `Revealing the illustration for ${translateColor(m[3], 'en')} X Rare "${m[4]}"!\nStandard 2nd Booster Pack [${localizeBSName(m[2], 'en')}] will be available starting ${m[6]}!\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        zh: (m) => `公開將於Standard系列第二彈《${m[2]}》中登場的${translateColor(m[3], 'zh')}屬性X稀有「${m[4]}」插圖！\n《補充包 ${m[5]}》將於 ${m[6]} 發售！\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        th: (m) => `มาแล้ว! ภาพอิลลัสต์ของ X Rare ${translateColor(m[3], 'th')} “${m[4]}”!\nStandard 2nd Booster Pack “${localizeBSName(m[5], 'th')}” มีกำหนดวางจำหน่าย ${m[6]} นี้!`
+                    },
+                    hashtags: "#BattleSpirits"
+                },
+                {
+                    name: "Gundam Card Reveal",
+                    pattern: /【収録カード紹介】 「(.*?)」を紹介！ ブースターパック『(.*?)』は(.*?)(?:\(.\))?\s*発売.*?▽商品ページはこちら (https?:\/\/\S+)/,
+                    prefix: (m) => {
+                        missingTranslations.push(`ガンダム: ${m[1]} (要確認)`);
+                        return `【Card Reveal / 卡牌介紹 / แนะนำการ์ด】\n\n`;
+                    },
+                    outputs: {
+                        en: (m) => `Introducing "${m[1]}"!\nBooster Pack [${m[2]}] releases on ${m[3]}!\n▽Product Info\n${m[4].replace('/jp/', '/asia-en/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        zh: (m) => `介紹「${m[1]}」!\n補充包『${m[2]}』將於 ${m[3]} 發售！\n▽商品資訊\n${m[4].replace('/jp/', '/zh-tw/')}\n\n━━━━━━━━━━━━━━━━━━━━`,
+                        th: (m) => `แนะนำการ์ด "${m[1]}"!\nBooster Pack "${m[2]}" วางจำหน่ายวันที่ ${m[3]}!\n▽ข้อมูลสินค้า\n${m[4].replace('/jp/', '/th/')}`
+                    },
+                    hashtags: "#GundamCardGame\n#GCG\n#高達卡牌"
+                },
+                {
+                    name: "One Piece Booster Reveal",
+                    pattern: /★(.*?)カード紹介★ (.*?)発売のブースターパック『(.*?)』に収録するカードをご紹介！ 今回は.*?「(.*?)」です。 ▼商品情報はコチラ (https?:\/\/\S+)/,
+                    prefix: (m) => `★${m[1]} Card Reveal / ${m[1]}卡公開 / ${m[1]} แนะนำการ์ดในเซ็ต★\n\n`,
+                    outputs: {
+                        en: (m) => {
+                            const opUrl = m[5].replace('onepiece', 'asia-en.onepiece').replace('.html', '.php');
+                            return `Introducing the Character Card "${getOnePieceName(m[4])}"! This card will be included in Booster Pack: ${m[3]} releasing on ${m[2]}!\n▼Product Info\n${opUrl}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        zh: (m) => {
+                            const opUrl = m[5].replace('onepiece', 'asia-tc.onepiece').replace('.html', '.php');
+                            return `我將向您介紹將於${m[2]} 發售の補充包：${m[3]} 收錄卡片！這次是角色卡「${getOnePieceName(m[4])}」。\n▼商品資訊\n${opUrl}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        th: (m) => {
+                            const opUrl = m[5].replace('onepiece', 'asia-th.onepiece').replace('.html', '.php');
+                            return `แนะนำการ์ดจาก Booster Pack ${m[3]} วางจำหน่าย ${m[2]} นี้! ครั้งนี้เป็นการ์ดตัวละคร "${getOnePieceName(m[4])}"!\n▼ข้อมูลสินค้า คลิกที่นี่\n${opUrl}`;
+                        }
+                    },
+                    hashtags: "#ONEPIECE\n#ONEPIECECardgame\n#航海王卡牌"
+                },
+                {
+                    name: "Digimon Double Card Reveal",
+                    pattern: /★カード紹介★ 『(.*?)』の(カード|パラレルカード)をご紹介。 本日のカードは「(.*?)」「(.*?)」です！ 🔽詳細 (https?:\/\/\S+)/,
+                    prefix: (m) => `★Card Reveal / 卡牌介紹 / แนะนำการ์ด★\n\n`,
+                    outputs: {
+                        en: (m) => {
+                            const type = m[2] === "パラレルカード" ? "Parallel Cards" : "cards";
+                            return `Introducing ${type} from the ${localizeDigimonPackName(m[1], 'en')}!\nToday’s cards are [${getDigimonName(m[3])}] and [${getDigimonName(m[4])}]!\n🔽Details\n${m[5].replace('://', '://en.')}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        zh: (m) => {
+                            const type = m[2] === "パラレルカード" ? "平行卡" : "卡片";
+                            return `為您介紹『${localizeDigimonPackName(m[1], 'zh')}』的${type}。\n今天的卡片是「${getDigimonName(m[3])}」「${getDigimonName(m[4])}」！\n🔽詳細\n${m[5].replace('://', '://hk.')}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        th: (m) => {
+                            const type = m[2] === "パラレルカード" ? "Parallel Cards" : "การ์ด";
+                            return `แนะนำ${type}จาก ${localizeDigimonPackName(m[1], 'th')}!\nวันนี้เราขอแนะนำการ์ด “${getDigimonName(m[3])}” および “${getDigimonName(m[4])}”!\n🔽รายละเอียด\n${m[5].replace('://', '://en.')}`;
+                        }
+                    },
+                    hashtags: "#DigimonCardGame\n#DigimonTCG\n#Digimon\n#數碼寶貝卡牌遊戲"
+                },
+                {
+                    name: "Digimon Single Card Reveal",
+                    pattern: /★カード紹介★ 『(.*?)』の(カード|パラレルカード)をご紹介。 本日のカードは「(.*?)」です！ 🔽詳細 (https?:\/\/\S+)/,
+                    prefix: (m) => `★Card Reveal / 卡牌介紹 / แนะนำการ์ด★\n\n`,
+                    outputs: {
+                        en: (m) => {
+                            const type = m[2] === "パラレルカード" ? "Parallel Card" : "cards";
+                            return `Introducing the ${type} from the ${localizeDigimonPackName(m[1], 'en')}!\nToday’s card is [${getDigimonName(m[3])}]!\n🔽Details\n${m[4].replace('://', '://en.')}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        zh: (m) => {
+                            const type = m[2] === "パラレルカード" ? "平行卡" : "卡片";
+                            return `為您介紹『${localizeDigimonPackName(m[1], 'zh')}』の${type}。\n今天的卡片是「${getDigimonName(m[3])}」！\n🔽詳細\n${m[4].replace('://', '://hk.')}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        th: (m) => {
+                            const type = m[2] === "パラレルカード" ? "Parallel Card" : "การ์ด";
+                            return `แนะนำ${type}จาก ${localizeDigimonPackName(m[1], 'th')}!\nวันนี้เราขอแนะนำการ์ด “${getDigimonName(m[3])}”!\n🔽รายละเอียด\n${m[4].replace('://', '://en.')}`;
+                        }
+                    },
+                    hashtags: "#DigimonCardGame\n#DigimonTCG\n#Digimon\n#數碼寶貝卡牌遊戲"
+                }
+            ];
+
+            /* --- CSV PROCESSING LOGIC --- */
+            document.getElementById('processCsvBtn').addEventListener('click', () => {
+                const fileInput = document.getElementById('csvFileInput');
+                const status = document.getElementById('statusMessage');
+                
+                if (!fileInput.files.length) {
+                    alert("Please upload a CSV file first.");
+                    return;
+                }
+
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    processCsvContent(content);
+                };
+                reader.readAsText(file);
+            });
+
+            function processCsvContent(csvText) {
+                // Handle UTF-8 BOM if present
+                if (csvText.startsWith('\ufeff')) csvText = csvText.slice(1);
+                
+                const lines = parseCSV(csvText);
+                if (lines.length < 2) return;
+
+                const headers = lines[0];
+                const textColIdx = headers.indexOf('テキスト');
+                
+                if (textColIdx === -1) {
+                    alert("Error: Column 'テキスト' not found in CSV.");
+                    return;
+                }
+
+                const newHeaders = [...headers, "Translated Text", "Translation Warnings"];
+                const resultRows = [newHeaders];
+
+                const useEn = document.getElementById('langEn').checked;
+                const useZh = document.getElementById('langZh').checked;
+                const useTh = document.getElementById('langTh').checked;
+
+                for (let i = 1; i < lines.length; i++) {
+                    const row = lines[i];
+                    if (row.length < headers.length) continue;
+
+                    const rawText = row[textColIdx];
+                    const normalizedText = rawText.replace(/\s+/g, ' ');
+
+                    let matchedTemplate = null;
+                    let matchResult = null;
+                    
+                    // Reset global warnings per row
+                    missingTranslations = [];
+
+                    for (const tmpl of translationTemplates) {
+                        const m = normalizedText.match(tmpl.pattern);
+                        if (m) {
+                            matchedTemplate = tmpl;
+                            matchResult = m;
+                            break;
+                        }
+                    }
+
+                    // Only keep row if it was translated
+                    if (matchedTemplate) {
+                        const finalTranslations = [];
+                        if (useEn) finalTranslations.push(matchedTemplate.outputs.en(matchResult));
+                        if (useZh) finalTranslations.push(matchedTemplate.outputs.zh(matchResult));
+                        if (useTh) finalTranslations.push(matchedTemplate.outputs.th(matchResult));
+
+                        const prefix = matchedTemplate.prefix ? matchedTemplate.prefix(matchResult) : "";
+                        const hashtags = matchedTemplate.hashtags ? '\n\n\n' + matchedTemplate.hashtags : "";
+                        
+                        const fullTranslation = prefix + finalTranslations.join('\n\n') + hashtags;
+                        const warnings = missingTranslations.length > 0 ? missingTranslations.join('; ') : "None";
+
+                        resultRows.push([...row, fullTranslation, warnings]);
+                    }
+                }
+
+                downloadCSV(resultRows);
+            }
+
+            // Simple CSV parser to handle quotes and commas properly
+            function parseCSV(text) {
+                const rows = [];
+                let row = [];
+                let field = '';
+                let inQuotes = false;
+                for (let i = 0; i < text.length; i++) {
+                    const char = text[i];
+                    const nextChar = text[i+1];
+                    if (inQuotes) {
+                        if (char === '"' && nextChar === '"') { field += '"'; i++; }
+                        else if (char === '"') { inQuotes = false; }
+                        else { field += char; }
+                    } else {
+                        if (char === '"') { inQuotes = true; }
+                        else if (char === ',') { row.push(field); field = ''; }
+                        else if (char === '\n' || char === '\r') {
+                            row.push(field);
+                            if (row.length > 1 || row[0] !== '') rows.push(row);
+                            row = []; field = '';
+                            if (char === '\r' && nextChar === '\n') i++;
+                        } else { field += char; }
+                    }
+                }
+                if (row.length || field) { row.push(field); rows.push(row); }
+                return rows;
+            }
+
+            function downloadCSV(rows) {
+                const csvContent = "\ufeff" + rows.map(r => r.map(cell => `"${(cell || "").toString().replace(/"/g, '""')}"`).join(",")).join("\n");
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "translated_posts.csv");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        </script>
+    </main>
+</body>
