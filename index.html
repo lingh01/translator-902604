@@ -420,20 +420,29 @@ title: Home Page
                 },
                 {
                     name: "Digimon Single Card Reveal",
-                    // $1: Full Title, $2: Type (card/parallel), $3: Monster 1, $4: URL
-                    pattern: /★カード紹介★ 『(.*?)』の(カード|パラレルカード)をご紹介。 本日のカードは「(.*?)」です！ 🔽詳細 (https?:\/\/\S+)/,
+                    // $1: Full Title, $2: Type (card/parallel/rare sample), $3: Monster 1, $4: URL
+                    pattern: /★カード紹介★ 『(.*?)』の(カード|パラレルカード|希少カードのサンプル)をご紹介。 本日のカードは「(.*?)」です！ 🔽詳細 (https?:\/\/\S+)/,
                     prefix: (m) => `★Card Reveal / 卡牌介紹 / แนะนำการ์ด★\n\n`,
                     outputs: {
                         en: (m) => {
-                            const type = m[2] === "パラレルカード" ? "Parallel Card" : "cards";
+                            let type = "cards";
+                            if (m[2] === "パラレルカード") type = "Parallel Card";
+                            if (m[2] === "希少カードのサンプル") type = "Rare Card sample";
+                            
                             return `Introducing the ${type} from the ${localizeDigimonPackName(m[1], 'en')}!\nToday’s card is [${getDigimonName(m[3])}]!\n🔽Details\n${m[4].replace('://', '://en.')}\n\n━━━━━━━━━━━━━━━━━━━━`;
                         },
                         zh: (m) => {
-                            const type = m[2] === "パラレルカード" ? "平行卡" : "卡片";
+                            let type = "卡片";
+                            if (m[2] === "パラレルカード") type = "平行卡";
+                            if (m[2] === "希少カードのサンプル") type = "稀有卡樣本";
+                
                             return `為您介紹『${localizeDigimonPackName(m[1], 'zh')}』的${type}。\n今天的卡片是「${getDigimonName(m[3])}」！\n🔽詳細\n${m[4].replace('://', '://hk.')}\n\n━━━━━━━━━━━━━━━━━━━━`;
                         },
                         th: (m) => {
-                            const type = m[2] === "パラレルカード" ? "Parallel Card" : "การ์ด";
+                            let type = "การ์ด";
+                            if (m[2] === "パラレルカード") type = "Parallel Card";
+                            if (m[2] === "希少カードのサンプル") type = "ตัวอย่างการ์ดหายาก (Rare Card)";
+                
                             return `แนะนำ${type}จาก ${localizeDigimonPackName(m[1], 'th')}!\nวันนี้เราขอแนะนำการ์ด “${getDigimonName(m[3])}”!\n🔽รายละเอียด\n${m[4].replace('://', '://en.')}`;
                         }
                     },
