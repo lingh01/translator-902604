@@ -368,7 +368,7 @@ title: Home Page
                         };
                         const title = typeMap[m[2]] || "Card Reveal / 卡牌介紹 / แนะนำการ์ด";
                         return `${m[1]}${title}${m[3]}\n\n`;
-                    },
+                        },
                     outputs: {
                         en: (m) => {
                             const specialText = m[4] ? `\\ ${m[4]} /\n` : "";
@@ -393,32 +393,6 @@ title: Home Page
                             const charList = m[7].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
                             const url = m[8].replace('/jp/', '/en/');
                             return `${specialText}แนะนำการ์ดจาก ${packName} วางจำหน่าย ${cleanDate} นี้!\n\n${charList}\n\n🔻ข้อมูลสินค้า คลิกที่นี่\n${url}`;
-                        }
-                    },
-                    hashtags: "#UNIONARENA"
-                },
-                    outputs: {
-                        en: (m) => {
-                            const specialText = m[4] ? `\\ ${m[4]} /\n` : "";
-                            const packName = m[6].replace('ブースターパック ', 'Booster Pack '); // Basic EN replacement
-                            // Reconstructs the bullet list cleanly
-                            const charList = m[7].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
-                            const url = m[8].replace('/jp/', '/en/');
-                            return `${specialText}Card revealed from "${packName}" releasing ${m[5]}!\n\n${charList}\n\n🔻Product Info\n${url}\n\n━━━━━━━━━━━━━━━━━━━━`;
-                        },
-                        zh: (m) => {
-                            const specialText = m[4] ? `＼ ${m[4]} ／\n` : "";
-                            const packName = m[6].replace('ブースターパック ', '補充包 '); // Basic ZH replacement
-                            const charList = m[7].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
-                            const url = m[8].replace('/jp/', '/tc/');
-                            return `${specialText}預計於${m[5]}發售的《${packName}》收錄卡片公開！\n\n${charList}\n\n🔻商品資訊\n${url}\n\n━━━━━━━━━━━━━━━━━━━━`;
-                        },
-                        th: (m) => {
-                            const specialText = m[4] ? `\\ ${m[4]} /\n` : "";
-                            const packName = m[6].replace('ブースターパック ', 'Booster Pack ');
-                            const charList = m[7].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
-                            const url = m[8].replace('/jp/', '/en/');
-                            return `${specialText}แนะนำการ์ดจาก ${packName} วางจำหน่าย ${m[5]} นี้!\n\n${charList}\n\n🔻ข้อมูลสินค้า คลิกที่นี่\n${url}`;
                         }
                     },
                     hashtags: "#UNIONARENA"
