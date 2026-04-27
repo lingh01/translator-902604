@@ -352,6 +352,48 @@ title: Home Page
                     hashtags: "#ONEPIECE\n#ONEPIECECardgame\n#航海王卡牌"
                 },
                 {
+                    name: "Union Arena Card Reveal",
+                    // $1: Emoji Left, $2: Reveal Type, $3: Emoji Right, $4: Special Text (Optional), $5: Date, $6: Pack Name, $7: Bullet list of cards, $8: URL
+                    pattern: /(\S+)(パラレルカード紹介|カード紹介|APカード紹介)(\S+)\s*(?:＼\s*(.*?)\s*／\s*)?(.*?)発売(?:予定)?\s*『(.*?)』に収録の.*?カードを公開！\s*((?:・.*?\s*)+)🔻商品情報\s*(https?:\/\/\S+)/,
+                    prefix: (m) => {
+                        // Warns to check English names manually
+                        missingTranslations.push(`ユニオンアリーナ: パック名・カード名 (英語名はインターネットで確認してください)`);
+                        
+                        const typeMap = {
+                            "パラレルカード紹介": "Parallel Card Reveal / 平行卡公開 / แนะนำการ์ดพาราเลล",
+                            "カード紹介": "Card Reveal / 卡牌介紹 / แนะนำการ์ด",
+                            "APカード紹介": "AP Card Reveal / AP卡公開 / แนะนำการ์ด AP"
+                        };
+                        const title = typeMap[m[2]] || "Card Reveal / 卡牌介紹 / แนะนำการ์ด";
+                        return `${m[1]}${title}${m[3]}\n\n`;
+                    },
+                    outputs: {
+                        en: (m) => {
+                            const specialText = m[4] ? `\\ ${m[4]} /\n` : "";
+                            const packName = m[6].replace('ブースターパック ', 'Booster Pack '); // Basic EN replacement
+                            // Reconstructs the bullet list cleanly
+                            const charList = m[7].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
+                            const url = m[8].replace('/jp/', '/en/');
+                            return `${specialText}Card revealed from "${packName}" releasing ${m[5]}!\n\n${charList}\n\n🔻Product Info\n${url}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        zh: (m) => {
+                            const specialText = m[4] ? `＼ ${m[4]} ／\n` : "";
+                            const packName = m[6].replace('ブースターパック ', '補充包 '); // Basic ZH replacement
+                            const charList = m[7].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
+                            const url = m[8].replace('/jp/', '/tc/');
+                            return `${specialText}預計於${m[5]}發售的《${packName}》收錄卡片公開！\n\n${charList}\n\n🔻商品資訊\n${url}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        th: (m) => {
+                            const specialText = m[4] ? `\\ ${m[4]} /\n` : "";
+                            const packName = m[6].replace('ブースターパック ', 'Booster Pack ');
+                            const charList = m[7].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
+                            const url = m[8].replace('/jp/', '/en/');
+                            return `${specialText}แนะนำการ์ดจาก ${packName} วางจำหน่าย ${m[5]} นี้!\n\n${charList}\n\n🔻ข้อมูลสินค้า คลิกที่นี่\n${url}`;
+                        }
+                    },
+                    hashtags: "#UNIONARENA"
+                },
+                {
                     name: "Digimon Double Card Reveal",
                     // $1: Full Title, $2: Type (card/parallel), $3: Monster 1, $4: Monster 2, $5: URL
                     pattern: /★カード紹介★ 『(.*?)』の(カード|パラレルカード)をご紹介。 本日のカードは「(.*?)」「(.*?)」です！ 🔽詳細 (https?:\/\/\S+)/,
