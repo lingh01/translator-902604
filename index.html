@@ -102,12 +102,14 @@ title: Home Page
                 "ブースターパック DUAL REVOLUTION": "BOOSTER PACK DUAL REVOLUTION",
                 "スタートデッキ DIGIMON BEATBREAK": "STARTER DECK DIGIMON BEATBREAK",
                 "幻惑の翔風": "/ Enchanted Skywind",
-                "ハヤケン・サレナ": "hayaken_sarena"
+                "ハヤケン・サレナ": "hayaken_sarena",
+                "陰の実力者になりたくて！": "The Eminence in Shadow"
             }
 
             const glossary_jp_to_zh = {
                 "ブースターパック DUAL REVOLUTION": "補充包 雙重巨變",
-                "スタートデッキ DIGIMON BEATBREAK": "起始牌組 節奏破碎"
+                "スタートデッキ DIGIMON BEATBREAK": "起始牌組 節奏破碎",
+                "陰の実力者になりたくて！": "我想成為影之強者！"
             }
 
             const colorMap = {
@@ -367,6 +369,34 @@ title: Home Page
                         const title = typeMap[m[2]] || "Card Reveal / 卡牌介紹 / แนะนำการ์ด";
                         return `${m[1]}${title}${m[3]}\n\n`;
                     },
+                    outputs: {
+                        en: (m) => {
+                            const specialText = m[4] ? `\\ ${m[4]} /\n` : "";
+                            const cleanDate = m[5].replace(/\(.*?\)/, '').trim(); // Removes (金)
+                            const packName = m[6].replace('ブースターパック ', 'Booster Pack '); 
+                            const charList = m[7].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
+                            const url = m[8].replace('/jp/', '/en/');
+                            return `${specialText}Card revealed from "${packName}" releasing ${cleanDate}!\n\n${charList}\n\n🔻Product Info\n${url}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        zh: (m) => {
+                            const specialText = m[4] ? `＼ ${m[4]} ／\n` : "";
+                            const cleanDate = m[5].replace(/\(.*?\)/, '').trim(); // Removes (金)
+                            const packName = m[6].replace('ブースターパック ', '補充包 '); 
+                            const charList = m[7].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
+                            const url = m[8].replace('/jp/', '/tc/');
+                            return `${specialText}預計於${cleanDate}發售的《${packName}》收錄卡片公開！\n\n${charList}\n\n🔻商品資訊\n${url}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        th: (m) => {
+                            const specialText = m[4] ? `\\ ${m[4]} /\n` : "";
+                            const cleanDate = m[5].replace(/\(.*?\)/, '').trim(); // Removes (金)
+                            const packName = m[6].replace('ブースターパック ', 'Booster Pack ');
+                            const charList = m[7].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
+                            const url = m[8].replace('/jp/', '/en/');
+                            return `${specialText}แนะนำการ์ดจาก ${packName} วางจำหน่าย ${cleanDate} นี้!\n\n${charList}\n\n🔻ข้อมูลสินค้า คลิกที่นี่\n${url}`;
+                        }
+                    },
+                    hashtags: "#UNIONARENA"
+                },
                     outputs: {
                         en: (m) => {
                             const specialText = m[4] ? `\\ ${m[4]} /\n` : "";
