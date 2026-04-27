@@ -419,6 +419,59 @@ title: Home Page
                     hashtags: "#DigimonCardGame\n#DigimonTCG\n#Digimon\n#數碼寶貝卡牌遊戲"
                 },
                 {
+                    name: "Dragon Ball Fusion World Card Reveal",
+                    // $1: Code (e.g. FB10), $2: Month, $3: Day, $4: Pack Type, $5: Pack Name, $6: Card Type, $7: Card Name, $8: URL
+                    pattern: /【?(.*?)カード紹介】\s*(\d+)\/(\d+)\(.\)(?:発売|発売予定|発売中)[、\s]*(.*?)『(.*?)』に収録する(.*?)「(.*?)」をご紹介！\s*🔽商品ページ\s*(https?:\/\/\S+)/,
+                    prefix: (m) => {
+                        // Triggers the yellow warning box to remind you to fill in the English name
+                        missingTranslations.push(`Dragon Ball: ${m[7]} (英語名は手動で入力してください)`);
+                        return `【 Card Introduction / 卡牌介紹 / แนะนำการ์ด 】\n\n`;
+                    },
+                    outputs: {
+                        en: (m) => {
+                            // Translate Pack Type
+                            const packPrefix = m[4].replace("ブースターパック", "Booster Pack").replace("スタートデッキ", "Starter Deck");
+                            
+                            // Translate Card Type
+                            let cardType = m[6];
+                            if (cardType === "バトルカード") cardType = "Battle Card";
+                            else if (cardType === "リーダーカード") cardType = "Leader Card";
+                            else if (cardType === "エクストラカード") cardType = "Extra Card";
+
+                            // Format URL
+                            const url = m[8].replace('://dbs-cardgame.com', '://www.dbs-cardgame.com').replace('/jp/', '/asia-en/');
+
+                            return `[${m[1]} Card Introduction] Introducing the ${cardType} "${m[7]} / [EN Name]" from the "${packPrefix} ${m[5]}" releasing on ${m[2]}/${m[3]}! \n\n🔽Product Info\n${url}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        zh: (m) => {
+                            const packPrefix = m[4].replace("ブースターパック", "Booster Pack").replace("スタートデッキ", "Starter Deck");
+                            
+                            let cardType = m[6];
+                            if (cardType === "バトルカード") cardType = "戰鬥卡";
+                            else if (cardType === "リーダーカード") cardType = "領袖卡";
+                            else if (cardType === "エクストラカード") cardType = "額外卡";
+
+                            const url = m[8].replace('://dbs-cardgame.com', '://www.dbs-cardgame.com').replace('/jp/', '/asia-tc/');
+
+                            return `【${m[1]} 卡牌介紹】介紹將於 ${m[2]}/${m[3]}發售的《${packPrefix} ${m[5]}》中收錄的${cardType}「${m[7]}」！\n\n🔽商品資訊\n${url}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        th: (m) => {
+                            const packPrefix = m[4].replace("ブースターパック", "Booster Pack").replace("スタートデッキ", "Starter Deck");
+                            
+                            let cardType = m[6];
+                            if (cardType === "バトルカード") cardType = "การ์ดแบทเทิล";
+                            else if (cardType === "リーダーカード") cardType = "การ์ดลีดเดอร์";
+                            else if (cardType === "エクストラカード") cardType = "การ์ดเอ็กซ์ตร้า";
+
+                            const url = m[8].replace('://dbs-cardgame.com', '://www.dbs-cardgame.com').replace('/jp/', '/asia-th/');
+
+                            // Note: Thai format uses DD/MM instead of MM/DD, so it outputs m[3]/m[2]
+                            return `[แนะนำการ์ด ${m[1]}] ขอแนะนำ${cardType} “${m[7]} / [EN Name]” ที่บรรจุอยู่ใน “${packPrefix} ${m[5]}” ซึ่งจะวางจำหน่ายในวันที่ ${m[3]}/${m[2]} นี้!  \n\n🔽ข้อมูลสินค้า\n${url}`;
+                        }
+                    },
+                    hashtags: "#DragonBall\n#fusionworld\n#dbscardgame\n#七龍珠超卡牌遊戲"
+                },
+                {
                     name: "Digimon Single Card Reveal",
                     // $1: Full Title, $2: Type (card/parallel/rare sample), $3: Monster 1, $4: URL
                     pattern: /★カード紹介★ 『(.*?)』の(カード|パラレルカード|希少カードのサンプル)をご紹介。 本日のカードは「(.*?)」です！ 🔽詳細 (https?:\/\/\S+)/,
