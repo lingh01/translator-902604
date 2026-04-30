@@ -255,18 +255,22 @@ title: Home Page
                     },
                     outputs: {
                         en: (m) => {
+                            // Automatically delete "X月開催分" (e.g. 4月開催分)
+                            const cleanTitles = m[3].replace(/\d+月開催分/g, '').trim();
                             // Replaces Japanese brackets and dots with English equivalents
-                            const titlesEn = m[3].replace(/『/g, '“').replace(/』/g, '”').replace(/・/g, ' and ');
+                            const titlesEn = cleanTitles.replace(/『/g, '“').replace(/』/g, '”').replace(/・/g, ' and ');
                             return `The deck distribution for ${titlesEn} held from ${m[1]} to ${m[2]} has been revealed!\nPlease use it as a reference for your deck building.\n\n━━━━━━━━━━━━━━━━━━━━`;
                         },
                         zh: (m) => {
+                            const cleanTitles = m[3].replace(/\d+月開催分/g, '').trim();
                             // Replaces Japanese brackets and dots with Chinese equivalents
-                            const titlesZh = m[3].replace(/『/g, '「').replace(/』/g, '」').replace(/・/g, '與');
+                            const titlesZh = cleanTitles.replace(/『/g, '「').replace(/』/g, '」').replace(/・/g, '與');
                             return `公開 ${m[1]} 至 ${m[2]} 舉辦的${titlesZh}的牌組分布！\n請參考作為您的牌組構築指南。\n\n━━━━━━━━━━━━━━━━━━━━`;
                         },
                         th: (m) => {
+                            const cleanTitles = m[3].replace(/\d+月開催分/g, '').trim();
                             // Replaces Japanese brackets and dots with Thai equivalents
-                            const titlesTh = m[3].replace(/『/g, '“').replace(/』/g, '”').replace(/・/g, 'และ');
+                            const titlesTh = cleanTitles.replace(/『/g, '“').replace(/』/g, '”').replace(/・/g, 'และ');
                             // Helper to flip MM/DD to DD/MM for Thai formatting
                             const toThDate = (d) => d.includes('/') ? `${d.split('/')[1]}/${d.split('/')[0]}` : d;
                             
