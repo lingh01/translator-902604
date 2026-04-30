@@ -246,6 +246,36 @@ title: Home Page
                     hashtags: "#BattleSpirits"
                 },
                 {
+                    name: "Deck Distribution Reveal",
+                    // $1: Start Date (MM/DD), $2: End Date (MM/DD), $3: Titles
+                    pattern: /【デッキ分布公開】\s*([0-9/]+)(?:\([^\)]+\))?\s*[～\-]\s*([0-9/]+)(?:\([^\)]+\))?\s*に開催した\s*(.*?)\s*のデッキ分布を公開！\s*ぜひデッキ構築の参考にしてみてください。?/,
+                    prefix: (m) => {
+                        missingTranslations.push(`デッキ分布公開: イベント名 (手動で翻訳してください / Translate event titles manually)`);
+                        return `【Deck Distribution Reveal / 牌組分布公開 / การกระจายของเด็คเปิดเผย】\n\n`;
+                    },
+                    outputs: {
+                        en: (m) => {
+                            // Replaces Japanese brackets and dots with English equivalents
+                            const titlesEn = m[3].replace(/『/g, '“').replace(/』/g, '”').replace(/・/g, ' and ');
+                            return `The deck distribution for ${titlesEn} held from ${m[1]} to ${m[2]} has been revealed!\nPlease use it as a reference for your deck building.\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        zh: (m) => {
+                            // Replaces Japanese brackets and dots with Chinese equivalents
+                            const titlesZh = m[3].replace(/『/g, '「').replace(/』/g, '」').replace(/・/g, '與');
+                            return `公開 ${m[1]} 至 ${m[2]} 舉辦的${titlesZh}的牌組分布！\n請參考作為您的牌組構築指南。\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        th: (m) => {
+                            // Replaces Japanese brackets and dots with Thai equivalents
+                            const titlesTh = m[3].replace(/『/g, '“').replace(/』/g, '”').replace(/・/g, 'และ');
+                            // Helper to flip MM/DD to DD/MM for Thai formatting
+                            const toThDate = (d) => d.includes('/') ? `${d.split('/')[1]}/${d.split('/')[0]}` : d;
+                            
+                            return `การกระจายของเด็คสำหรับ ${titlesTh} ที่จัดขึ้นระหว่าง ${toThDate(m[1])} – ${toThDate(m[2])} ถูกเปิดเผยแล้ว!\nโปรดใช้เป็นแนวทางสำหรับการสร้างเด็คของคุณ`;
+                        }
+                    },
+                    hashtags:"#GundamCardGame\n#GCG\n#高達卡牌"
+                },
+                {
                     name: "Product Reveal",
                     // Matches: 【ID 商品紹介】... スタンダード第[二2]弾『Pack』で登場する...イラストを公開！
                     // $1: ID, $2: PackName, $3: Color, $4: CardName, $5: PackName(repeat), $6: Date
