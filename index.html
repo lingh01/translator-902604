@@ -355,12 +355,10 @@ title: Home Page
                 },
                 {
                     name: "Union Arena Card Reveal",
-                    // $1: Emoji Left, $2: Reveal Type, $3: Emoji Right, $4: Special Text (Optional), $5: Date, $6: Pack Name, $7: Bullet list of cards, $8: URL
-                    pattern: /(\S+)(パラレルカード紹介|カード紹介|APカード紹介)(\S+)\s*(?:＼\s*(.*?)\s*／\s*)?(.*?)発売(?:予定)?\s*『(.*?)』に収録の.*?カードを公開！\s*((?:・.*?\s*)+)🔻商品情報\s*(https?:\/\/\S+)/,
+                    // $1: Emoji, $2: Reveal Type, $3: Emoji, $4: Top Text, $5: Date, $6: Pack Name, $7: Mid Text, $8: Bullets, $9: URL
+                    pattern: /(\S+)(パラレルカード紹介|カード紹介|APカード紹介)(\S+)\s*(?:＼\s*(.*?)\s*／\s*)?(.*?)発売(?:予定)?\s*『(.*?)』に収録の.*?カードを公開！\s*(?:(.*?)\s*)?((?:・.*?\s*)+)🔻商品情報\s*(https?:\/\/\S+)/,
                     prefix: (m) => {
-                        // Warns to check English names manually
                         missingTranslations.push(`ユニオンアリーナ: パック名・カード名 (英語名はインターネットで確認してください)`);
-                        
                         const typeMap = {
                             "パラレルカード紹介": "Parallel Card Reveal / 平行卡公開 / แนะนำการ์ดพาราเลล",
                             "カード紹介": "Card Reveal / 卡牌介紹 / แนะนำการ์ด",
@@ -368,31 +366,68 @@ title: Home Page
                         };
                         const title = typeMap[m[2]] || "Card Reveal / 卡牌介紹 / แนะนำการ์ด";
                         return `${m[1]}${title}${m[3]}\n\n`;
-                        },
+                    },
                     outputs: {
                         en: (m) => {
-                            const specialText = m[4] ? `\\ ${m[4]} /\n` : "";
-                            const cleanDate = m[5].replace(/\(.*?\)/, '').trim(); // Removes (金)
-                            const packName = m[6].replace('ブースターパック ', 'Booster Pack '); 
-                            const charList = m[7].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
-                            const url = m[8].replace('/jp/', '/en/');
-                            return `${specialText}Card revealed from "${packName}" releasing ${cleanDate}!\n\n${charList}\n\n🔻Product Info\n${url}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                            let specialText = "";
+                            if (m[4]) {
+                                specialText = (m[4].includes("箔押し") || m[4].includes("サイン")) 
+                                    ? `\\ New illustration & foil autograph✨/\n` 
+                                    : `\\ ${m[4]} /\n`;
+                            }
+                            
+                            let midText = m[7] ? m[7].trim() : "";
+                            if (midText) {
+                                // Translates "は新規イラスト" if present
+                                midText = midText.replace(/(.*?)は新規イラスト(.*?)/, '$1 features a new illustration$2');
+                                midText += "\n\n";
+                            }
+
+                            const cleanDate = m[5].replace(/\(.*?\)/, '').trim(); 
+                            const packName = m[6].replace('ブースターパック ', 'Booster Pack: '); 
+                            const charList = m[8].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
+                            const url = m[9].replace('/jp/', '/en/');
+                            return `${specialText}Cards revealed from "${packName}" releasing ${cleanDate}!\n${midText}${charList}\n\n🔻Product Info\n${url}\n\n━━━━━━━━━━━━━━━━━━━━`;
                         },
                         zh: (m) => {
-                            const specialText = m[4] ? `＼ ${m[4]} ／\n` : "";
-                            const cleanDate = m[5].replace(/\(.*?\)/, '').trim(); // Removes (金)
+                            let specialText = "";
+                            if (m[4]) {
+                                specialText = (m[4].includes("箔押し") || m[4].includes("サイン")) 
+                                    ? `＼ 全新繪製＆燙金簽名✨／\n` 
+                                    : `＼ ${m[4]} ／\n`;
+                            }
+
+                            let midText = m[7] ? m[7].trim() : "";
+                            if (midText) {
+                                midText = midText.replace(/は新規イラスト(.*?)/, '為全新繪製插圖$1');
+                                midText += "\n\n";
+                            }
+
+                            const cleanDate = m[5].replace(/\(.*?\)/, '').trim(); 
                             const packName = m[6].replace('ブースターパック ', '補充包 '); 
-                            const charList = m[7].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
-                            const url = m[8].replace('/jp/', '/tc/');
-                            return `${specialText}預計於${cleanDate}發售的《${packName}》收錄卡片公開！\n\n${charList}\n\n🔻商品資訊\n${url}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                            const charList = m[8].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
+                            const url = m[9].replace('/jp/', '/tc/');
+                            return `${specialText}預計於${cleanDate}發售的《${packName}》收錄卡片公開！\n${midText}${charList}\n\n🔻商品資訊\n${url}\n\n━━━━━━━━━━━━━━━━━━━━`;
                         },
                         th: (m) => {
-                            const specialText = m[4] ? `\\ ${m[4]} /\n` : "";
-                            const cleanDate = m[5].replace(/\(.*?\)/, '').trim(); // Removes (金)
-                            const packName = m[6].replace('ブースターパック ', 'Booster Pack ');
-                            const charList = m[7].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
-                            const url = m[8].replace('/jp/', '/en/');
-                            return `${specialText}แนะนำการ์ดจาก ${packName} วางจำหน่าย ${cleanDate} นี้!\n\n${charList}\n\n🔻ข้อมูลสินค้า คลิกที่นี่\n${url}`;
+                            let specialText = "";
+                            if (m[4]) {
+                                specialText = (m[4].includes("箔押し") || m[4].includes("サイン")) 
+                                    ? `\\ วาดใหม่ & มีลายเซ็นฟอยล์✨/\n` 
+                                    : `\\ ${m[4]} /\n`;
+                            }
+
+                            let midText = m[7] ? m[7].trim() : "";
+                            if (midText) {
+                                midText = midText.replace(/(.*?)は新規イラスト(.*?)/, '$1 มาพร้อมภาพวาดใหม่$2');
+                                midText += "\n\n";
+                            }
+
+                            const cleanDate = m[5].replace(/\(.*?\)/, '').trim(); 
+                            const packName = m[6].replace('ブースターパック ', 'Booster Pack: ');
+                            const charList = m[8].split('・').filter(Boolean).map(s => '・' + s.trim()).join('\n');
+                            const url = m[9].replace('/jp/', '/en/');
+                            return `${specialText}แนะนำการ์ดจาก "${packName}" วางจำหน่าย ${cleanDate} นี้!\n${midText}${charList}\n\n🔻ข้อมูลสินค้า คลิกที่นี่\n${url}`;
                         }
                     },
                     hashtags: "#UNIONARENA"
