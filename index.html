@@ -354,6 +354,27 @@ title: Home Page
                     hashtags: "#ONEPIECE\n#ONEPIECECardgame\n#航海王卡牌"
                 },
                 {
+                    name: "Digimon SP Card Sample Reveal",
+                    // $1: Pack Name, $2: Monster, $3: URL
+                    pattern: /★カード紹介★\s*『(.*?)』のSPカードのサンプルをご紹介。\s*本日のカードは「(.*?)」です！\s*[🔽▼]詳細\s*(https?:\/\/\S+)/,
+                    prefix: (m) => `★Card Reveal / 卡牌介紹 / แนะนำการ์ด★\n\n`,
+                    outputs: {
+                        en: (m) => {
+                            const packName = m[1].replace('ブースタ－', 'ブースター'); // Safety for typo
+                            return `Introducing an SP card sample from the ${localizeDigimonPackName(packName, 'en')}!\nToday’s card is [${getDigimonName(m[2])}]!\n🔽Details\n${m[3].replace('://', '://en.')}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        zh: (m) => {
+                            const packName = m[1].replace('ブースタ－', 'ブースター');
+                            return `為您介紹『${localizeDigimonPackName(packName, 'zh')}』的SP卡片樣本。\n今天的卡片是「${getDigimonName(m[2])}」！\n🔽詳細\n${m[3].replace('://', '://hk.')}\n\n━━━━━━━━━━━━━━━━━━━━`;
+                        },
+                        th: (m) => {
+                            const packName = m[1].replace('ブースタ－', 'ブースター');
+                            return `แนะนำตัวอย่างการ์ด SP จาก ${localizeDigimonPackName(packName, 'th')}!\nวันนี้เราขอแนะนำการ์ด “${getDigimonName(m[2])}”!\n🔽รายละเอียด\n${m[3].replace('://', '://en.')}`;
+                        }
+                    },
+                    hashtags: "#DigimonCardGame\n#DigimonTCG\n#Digimon\n#數碼寶貝卡牌遊戲"
+                },
+                {
                     name: "Digimon Normal & Parallel Single Reveal",
                     // $1: Pack Name, $2: Monster, $3: URL
                     pattern: /★カード紹介★\s*『(.*?)』の通常カードとパラレルカードをご紹介。\s*本日のカードは「(.*?)」です！\s*[🔽▼]詳細\s*(https?:\/\/\S+)/,
