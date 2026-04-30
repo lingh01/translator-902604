@@ -386,7 +386,8 @@ title: Home Page
                 {
                     name: "Digimon SP Card Sample Reveal",
                     // $1: Pack Name, $2: Monster, $3: URL
-                    pattern: /★カード紹介★\s*『(.*?)』のSPカードのサンプルをご紹介。\s*本日のカードは「(.*?)」です！\s*[🔽▼]詳細\s*(https?:\/\/\S+)/,
+                    // FIXED: Replaced [🔽▼] with (?:🔽|▼) to prevent emoji breaking
+                    pattern: /★カード紹介★\s*『(.*?)』のSPカードのサンプルをご紹介。\s*本日のカードは「(.*?)」です！\s*(?:🔽|▼)詳細\s*(https?:\/\/\S+)/,
                     prefix: (m) => `★Card Reveal / 卡牌介紹 / แนะนำการ์ด★\n\n`,
                     outputs: {
                         en: (m) => {
@@ -407,7 +408,7 @@ title: Home Page
                 {
                     name: "Digimon Normal & Parallel Single Reveal",
                     // $1: Pack Name, $2: Monster, $3: URL
-                    pattern: /★カード紹介★\s*『(.*?)』の通常カードとパラレルカードをご紹介。\s*本日のカードは「(.*?)」です！\s*[🔽▼]詳細\s*(https?:\/\/\S+)/,
+                    pattern: /★カード紹介★\s*『(.*?)』の通常カードとパラレルカードをご紹介。\s*本日のカードは「(.*?)」です！\s*[🔽|▼]詳細\s*(https?:\/\/\S+)/,
                     prefix: (m) => `★Card Reveal / 卡牌介紹 / แนะนำการ์ด★\n\n`,
                     outputs: {
                         en: (m) => {
